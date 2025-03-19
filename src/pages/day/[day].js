@@ -27,7 +27,7 @@ export default function DayPage() {
     if (user && day) {
       fetchReceipts();
     }
-  }, [user, day]);
+  }, [user, day, fetchReceipts]);
 
   const fetchReceipts = async () => {
     const now = new Date();

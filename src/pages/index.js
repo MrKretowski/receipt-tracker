@@ -1,6 +1,7 @@
 import {useState, useEffect} from "react";
 import {useRouter} from "next/router";
 import {supabase} from "../../lib/supabaseClient"
+import Link from 'next/link';
 
 export default function LoginPage(){
   const router = useRouter();
@@ -58,9 +59,12 @@ export default function LoginPage(){
 
       <p style={{ textAlign: "center", marginTop: "10px" }}>
         Don’t have an account?{" "}
-        <a href="/signup" style={{ color: "blue", textDecoration: "underline" }}>
+        <Link 
+          href="/signup" 
+          style={{ color: "blue", textDecoration: "underline" }}
+        >
           Sign up here
-        </a>
+        </Link>
       </p>
     </div>
   );
