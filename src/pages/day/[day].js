@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "../../../lib/supabaseClient";
 
 export default function DayPage() {
   const router = useRouter();
@@ -23,17 +23,11 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  useEffect(() => {
-    if (user && day) {
-      fetchReceipts();
-    }
-  }, [user, day, fetchReceipts]);
-
-  const fetchReceipts = async () => {
+  const fetchReceipts = useCallback(async () => {
+    if (!user || !day) return;
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
-
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     const { data, error } = await supabase
@@ -48,7 +42,11 @@ export default function DayPage() {
     } else {
       setReceipts(data);
     }
-  };
+  }, [user, day]);
+
+  useEffect(() => {
+    fetchReceipts();
+  }, [fetchReceipts]);
 
   const addReceipt = async (e) => {
     e.preventDefault();
@@ -62,7 +60,7 @@ export default function DayPage() {
         user_id: user.id,
         shop_name: shopName,
         amount: amount ? parseFloat(amount) : 0,
-        description: description,
+        description,
         date: dateStr,
       },
     ]);
@@ -83,7 +81,7 @@ export default function DayPage() {
   return (
     <div style={{ maxWidth: "600px", margin: "40px auto" }}>
       <h1>Receipts for Day {day}</h1>
-      
+
       <div style={{ margin: "20px 0" }}>
         {receipts.map((receipt) => (
           <div key={receipt.id} style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "8px" }}>
@@ -93,7 +91,7 @@ export default function DayPage() {
           </div>
         ))}
       </div>
-      
+
       <form onSubmit={addReceipt} style={{ display: "flex", flexDirection: "column" }}>
         <h2>Add a Receipt</h2>
         <input
