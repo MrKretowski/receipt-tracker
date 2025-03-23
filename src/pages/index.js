@@ -10,7 +10,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         router.replace("/calendar");
       }
@@ -35,91 +37,124 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#091540",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: "#091540", // Penn Blue background
+        color: "#fff",
         fontFamily: "'Poppins', sans-serif",
-        padding: "1rem",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <div
+      {/* Top bar with "Tracky" on the left, "Login" on the right */}
+      <header
         style={{
-          backgroundColor: "#FFFFFF",
-          borderRadius: "8px",
-          maxWidth: "400px",
-          width: "100%",
-          padding: "2rem",
-          boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "1rem 2rem",
         }}
       >
-        <h1
-          style={{
-            textAlign: "center",
-            marginBottom: "1rem",
-            color: "#091540",
-          }}
-        >
-          Login
-        </h1>
+        <h1 style={{ fontSize: "2rem", fontWeight: "bold", margin: 0 }}>Tracky</h1>
+        <div style={{ fontSize: "1.2rem" }}>Login</div>
+      </header>
 
-        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column" }}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              marginBottom: "1rem",
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid #7692FF",
-              borderRadius: "4px",
-            }}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              marginBottom: "1rem",
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid #7692FF",
-              borderRadius: "4px",
-            }}
-            required
-          />
+      {/* Center the form in the remaining space */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <form onSubmit={handleLogin} style={{ width: "300px", textAlign: "left" }}>
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "0.5rem",
+                fontWeight: "500",
+              }}
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              placeholder="Your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                borderBottom: "1px solid #fff",
+                padding: "0.5rem 0",
+                color: "#fff",
+                fontSize: "1rem",
+                outline: "none",
+              }}
+              required
+            />
+          </div>
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "0.5rem",
+                fontWeight: "500",
+              }}
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="Your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                borderBottom: "1px solid #fff",
+                padding: "0.5rem 0",
+                color: "#fff",
+                fontSize: "1rem",
+                outline: "none",
+              }}
+              required
+            />
+          </div>
+
           <button
             type="submit"
             style={{
+              width: "100%",
               padding: "0.75rem",
               fontSize: "1rem",
-              backgroundColor: "#7692FF",
-              color: "#fff",
+              backgroundColor: "#fff",
+              color: "#091540",
               border: "none",
               borderRadius: "4px",
               cursor: "pointer",
+              fontWeight: "500",
             }}
           >
             Log In
           </button>
-        </form>
 
-        <p style={{ textAlign: "center", marginTop: "1rem" }}>
-          Don’t have an account?{" "}
-          <Link
-            href="/signup"
-            style={{
-              color: "#ABD2FA",
-              textDecoration: "underline",
-            }}
-          >
-            Sign up here
-          </Link>
-        </p>
+          <p style={{ marginTop: "1rem", textAlign: "center" }}>
+            Don’t have an account?{" "}
+            <Link
+              href="/signup"
+              style={{
+                color: "#ABD2FA", // Uranian Blue link
+                textDecoration: "underline",
+              }}
+            >
+              Sign up here
+            </Link>
+          </p>
+        </form>
       </div>
     </div>
   );
