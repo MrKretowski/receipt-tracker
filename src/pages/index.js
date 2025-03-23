@@ -37,14 +37,13 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#091540", // Penn Blue background
+        backgroundColor: "#091540",
         color: "#fff",
         fontFamily: "'Poppins', sans-serif",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      {/* Top bar with "Tracky" on the left, "Login" on the right */}
       <header
         style={{
           display: "flex",
@@ -53,11 +52,10 @@ export default function LoginPage() {
           padding: "1rem 2rem",
         }}
       >
-        <h1 style={{ fontSize: "2rem", fontWeight: "bold", margin: 0 }}>Tracky</h1>
+        <h1 style={{ fontSize: "4rem", fontWeight: "bold", margin: 0 }}>Tracky</h1>
         <div style={{ fontSize: "1.2rem" }}>Login</div>
       </header>
 
-      {/* Center the form in the remaining space */}
       <div
         style={{
           flex: 1,
@@ -147,7 +145,7 @@ export default function LoginPage() {
             <Link
               href="/signup"
               style={{
-                color: "#ABD2FA", // Uranian Blue link
+                color: "#ABD2FA",
                 textDecoration: "underline",
               }}
             >
