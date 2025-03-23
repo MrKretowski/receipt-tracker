@@ -22,7 +22,6 @@ export default function SignUpPage() {
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    // 1. Sign up via Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -32,7 +31,6 @@ export default function SignUpPage() {
       return;
     }
 
-    // 2. Insert extra user data (name) into your custom "users" table
     if (data.user) {
       const { error: insertError } = await supabase.from("users").insert([
         { email: data.user.email, name },
@@ -43,7 +41,7 @@ export default function SignUpPage() {
       }
     }
 
-    // 3. Redirect to login
+    
     router.push("/");
   };
 
@@ -51,14 +49,13 @@ export default function SignUpPage() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#091540", // Penn Blue
+        backgroundColor: "#091540",
         color: "#fff",
-        fontFamily: "'Poppins', sans-serif", // or any loaded font
+        fontFamily: "'Poppins', sans-serif",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      {/* Header with "Tracky" on the left, "Signup" on the right */}
       <header
         style={{
           display: "flex",
@@ -68,10 +65,9 @@ export default function SignUpPage() {
         }}
       >
         <h1 style={{ fontSize: "4rem", fontWeight: "bold", margin: 0 }}>Tracky</h1>
-        <div style={{ fontSize: "1.2rem" }}>Signup</div>
+        <div style={{ fontSize: "1.2rem" }}>Sign Up</div>
       </header>
 
-      {/* Centered form in the remaining space */}
       <div
         style={{
           flex: 1,
@@ -81,7 +77,6 @@ export default function SignUpPage() {
         }}
       >
         <form onSubmit={handleSignup} style={{ width: "300px", textAlign: "left" }}>
-          {/* Name Field */}
           <div style={{ marginBottom: "1.5rem" }}>
             <label
               style={{
@@ -111,7 +106,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Email Field */}
           <div style={{ marginBottom: "1.5rem" }}>
             <label
               style={{
@@ -141,7 +135,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Password Field */}
           <div style={{ marginBottom: "1.5rem" }}>
             <label
               style={{
@@ -171,7 +164,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Sign Up Button */}
           <button
             type="submit"
             style={{
@@ -194,7 +186,7 @@ export default function SignUpPage() {
             <Link
               href="/"
               style={{
-                color: "#ABD2FA", // Uranian Blue link
+                color: "#ABD2FA",
                 textDecoration: "underline",
               }}
             >
