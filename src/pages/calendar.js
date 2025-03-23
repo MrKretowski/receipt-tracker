@@ -153,10 +153,10 @@ export default function CalendarPage() {
 
         {/* User Info & Logout */}
         <div style={{ textAlign: "right" }}>
-          <p style={{ margin: 0, fontSize: "1.2rem" }}>
-            Signed in as 
-            <strong>{user.email}</strong>
-          </p>
+            <p style={{ margin: 0, fontSize: "1.2rem" }}>
+                Signed in as <br />
+                <strong>{user.email}</strong>
+            </p>
           <p style={{ margin: 0, fontSize: "1.2rem" }}>
             Spent: <strong>${monthlyTotal.toFixed(2)}</strong>
           </p>
