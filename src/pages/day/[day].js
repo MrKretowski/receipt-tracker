@@ -303,7 +303,7 @@ const styles = {
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
     padding: "1rem 2rem",
   },
   headerLeft: {
@@ -449,7 +449,7 @@ const styles = {
     border: "none",             // remove the white border
     borderRadius: "4px",
     padding: "2rem",
-    width: "300px",             // match the receipt width
+    width: "500px",             // match the receipt width
     color: "#fff",
     // Optionally, remove the boxShadow if you want an even cleaner look:
     // boxShadow: "none",
