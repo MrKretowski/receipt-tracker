@@ -13,10 +13,10 @@ export default function DayPage() {
 
   // Auth state
   const [user, setUser] = useState(null);
-  // Receipts array in ascending order (oldest first)
+  // Receipts state (stored in ascending order: oldest first)
   const [receipts, setReceipts] = useState([]);
-  // windowStart indicates the index of the "main" (leftmost) receipt in the visible window.
-  const [windowStart, setWindowStart] = useState(0);
+  // Index of the "main" (center) receipt
+  const [currentIndex, setCurrentIndex] = useState(0);
   // Total spent for the day
   const [dayTotal, setDayTotal] = useState(0);
 
@@ -26,7 +26,7 @@ export default function DayPage() {
   const [modalAmount, setModalAmount] = useState("");
   const [modalDescription, setModalDescription] = useState("");
 
-  // Check authentication
+  // Check authentication on mount
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -39,12 +39,12 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  // Fetch receipts for the given day
+  // Fetch receipts for the given day (oldest first)
   async function fetchReceiptsForDay() {
     if (!user || !day) return;
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth() + 1; // adjusting for 0-based month
+    const month = now.getMonth() + 1; // adjust for 0-index
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     const { data, error } = await supabase
@@ -65,7 +65,7 @@ export default function DayPage() {
     });
     setDayTotal(total);
     setReceipts(data);
-    setWindowStart(0); // reset window on refresh
+    setCurrentIndex(0);
   }
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function DayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, day]);
 
-  // ----- Modal Logic -----
+  // ---------- Modal Logic ----------
   function openModal() {
     setModalShop("");
     setModalAmount("");
@@ -104,42 +104,40 @@ export default function DayPage() {
       console.error("Error adding receipt:", error);
       return;
     }
-
-    const newReceipt = data[0];
-    setReceipts((prev) => [...prev, newReceipt]); // Append new receipt
-    setDayTotal((prev) => prev + parseFloat(newReceipt.amount || 0));
+    // Immediately refresh receipts and close modal
+    await fetchReceiptsForDay();
     closeModal();
-    // Do not change windowStart; the main receipt remains the same.
   }
 
-  // ----- Carousel Scrolling Logic -----
-  const visibleCount = 3; // number of receipts visible if available
-  const visibleReceipts = receipts.slice(windowStart, windowStart + visibleCount);
+  // ---------- Carousel Scrolling Logic ----------
+  // We display up to 3 receipts in fixed positions: main (center), one to its right, and one further right.
+  const visibleCount = 3;
+  const visibleReceipts = receipts.slice(currentIndex, currentIndex + visibleCount);
 
-  const canScrollRight = windowStart > 0;
-  const canScrollLeft = windowStart < receipts.length - 1;
+  const canScrollRight = currentIndex > 0;
+  const canScrollLeft = currentIndex < receipts.length - visibleCount;
 
   function scrollRight() {
     if (canScrollRight) {
-      setWindowStart(windowStart - 1);
+      setCurrentIndex(currentIndex - 1);
     }
   }
   function scrollLeft() {
     if (canScrollLeft) {
-      setWindowStart(windowStart + 1);
+      setCurrentIndex(currentIndex + 1);
     }
   }
 
-  // ----- Go Back Button -----
+  // ---------- Back Button Logic ----------
   function goBack() {
     router.push("/calendar");
   }
 
-  // Render conditions
+  // ---------- Render Conditions ----------
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // Header Date: use same style as on the calendar page
+  // Header Date: use same style as CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -151,13 +149,13 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header with date, go back arrow, and total */}
+      {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <h2 style={styles.dayTitle}>
             {dayVal} {headerMonth} {headerYear}
           </h2>
-          <button onClick={goBack} style={styles.goBackButton}>
+          <button onClick={goBack} style={styles.backButton}>
             ← Back
           </button>
         </div>
@@ -166,9 +164,9 @@ export default function DayPage() {
         </div>
       </header>
 
-      {/* Main Carousel Area */}
+      {/* Main Area */}
       <div style={styles.main}>
-        {/* Plus button on left */}
+        {/* Plus button always on left */}
         <div style={styles.plusContainer} onClick={openModal}>
           <div style={styles.plusCircle}>+</div>
         </div>
@@ -178,40 +176,48 @@ export default function DayPage() {
         ) : (
           <div style={styles.carousel}>
             {/* Left arrow */}
-            <div
-              style={{
-                ...styles.arrow,
-                opacity: canScrollRight ? 1 : 0.3,
-                cursor: canScrollRight ? "pointer" : "default",
-              }}
-              onClick={scrollRight}
-            >
-              &lt;
-            </div>
+            {canScrollRight && (
+              <div
+                style={{
+                  ...styles.arrow,
+                  cursor: "pointer",
+                }}
+                onClick={scrollRight}
+              >
+                &lt;
+              </div>
+            )}
+            {!canScrollRight && (
+              <div style={{ ...styles.arrow, opacity: 0.3 }}> &lt; </div>
+            )}
 
-            {/* Visible receipts */}
+            {/* Visible receipts (locked positions: main, right, double right) */}
             <div style={styles.cardsContainer}>
               {visibleReceipts.map((receipt, i) => (
-                <ReceiptCard key={windowStart + i} receipt={receipt} />
+                <ReceiptCard key={currentIndex + i} receipt={receipt} isMain={i === 0} />
               ))}
             </div>
 
             {/* Right arrow */}
-            <div
-              style={{
-                ...styles.arrow,
-                opacity: canScrollLeft ? 1 : 0.3,
-                cursor: canScrollLeft ? "pointer" : "default",
-              }}
-              onClick={scrollLeft}
-            >
-              &gt;
-            </div>
+            {canScrollLeft && (
+              <div
+                style={{
+                  ...styles.arrow,
+                  cursor: "pointer",
+                }}
+                onClick={scrollLeft}
+              >
+                &gt;
+              </div>
+            )}
+            {!canScrollLeft && (
+              <div style={{ ...styles.arrow, opacity: 0.3 }}> &gt; </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Minimal Modal (pop-up) */}
+      {/* Minimal Modal */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -257,10 +263,10 @@ export default function DayPage() {
   );
 }
 
-function ReceiptCard({ receipt }) {
+function ReceiptCard({ receipt, isMain }) {
   return (
     <div style={styles.card}>
-      <h3 style={styles.cardTitle}>Receipt</h3>
+      <h3 style={styles.cardTitle}>{isMain ? "Main Receipt" : "Receipt"}</h3>
       <p>
         <strong>Shop:</strong> {receipt.shop_name}
       </p>
@@ -299,21 +305,22 @@ const styles = {
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: "1rem",
     flexWrap: "wrap",
   },
   headerLeft: {
     display: "flex",
-    alignItems: "center",
-    gap: "1rem",
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
   dayTitle: {
     margin: 0,
     fontSize: "4rem",
     fontWeight: "bold",
   },
-  goBackButton: {
+  backButton: {
+    marginTop: "0.5rem",
     background: "none",
     border: "none",
     color: "#fff",
@@ -322,6 +329,7 @@ const styles = {
   },
   dayTotal: {
     fontSize: "1.2rem",
+    alignSelf: "center",
   },
   main: {
     flex: 1,
@@ -368,7 +376,7 @@ const styles = {
     gap: "1rem",
   },
   card: {
-    width: "220px",
+    width: "240px",
     minHeight: "250px",
     backgroundColor: "#fff",
     color: "#091540",
@@ -381,7 +389,7 @@ const styles = {
     marginBottom: "0.5rem",
     fontSize: "1.1rem",
   },
-  // Modal styles (minimalistic, no white card)
+  // Modal styles (minimalistic, transparent pop-up)
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -445,4 +453,3 @@ const styles = {
     borderRadius: "4px",
   },
 };
-
