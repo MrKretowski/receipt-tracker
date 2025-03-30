@@ -61,7 +61,7 @@ export default function DayPage() {
     });
     setDayTotal(total);
     setReceipts(data);
-    setMainIndex(0); // Show the first receipt as main
+    setMainIndex(0); // show the first receipt as main
   }
 
   useEffect(() => {
@@ -104,24 +104,20 @@ export default function DayPage() {
     closeModal();
   }
 
-  // Receipts: main, second, third
+  // The three columns: main, second, third
   const mainReceipt = receipts[mainIndex] || null;
   const secondReceipt = mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
   const thirdReceipt = mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
 
   // Arrows
-  const canScrollLeft = mainIndex > 0; // older receipts to the left
-  const canScrollRight = mainIndex + 1 < receipts.length; // more receipts to the right
+  const canScrollLeft = mainIndex > 0;
+  const canScrollRight = mainIndex + 1 < receipts.length;
 
   function scrollLeft() {
-    if (canScrollLeft) {
-      setMainIndex(mainIndex - 1);
-    }
+    if (canScrollLeft) setMainIndex(mainIndex - 1);
   }
   function scrollRight() {
-    if (canScrollRight) {
-      setMainIndex(mainIndex + 1);
-    }
+    if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
   // Go back
@@ -133,7 +129,7 @@ export default function DayPage() {
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // Format date same as CalendarPage
+  // Date styling to match CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -145,9 +141,10 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header (same style as CalendarPage) */}
+      {/* Header EXACT style as CalendarPage */}
       <header style={styles.header}>
-        <div style={styles.headerLeft}>
+        {/* Left: Day, Month, Year in 4rem bold */}
+        <div>
           <h2 style={styles.dayTitle}>
             {dayVal} {headerMonth}, {headerYear}
           </h2>
@@ -155,6 +152,8 @@ export default function DayPage() {
             ← Back
           </button>
         </div>
+
+        {/* Right: Spent total */}
         <div style={styles.dayTotal}>
           Spent: <strong>${dayTotal.toFixed(2)}</strong>
         </div>
@@ -169,13 +168,14 @@ export default function DayPage() {
           <h1 style={styles.noReceipts}>No receipts</h1>
         </div>
       ) : (
+        // The locked 3-column layout
         <div style={styles.carouselContainer}>
-          {/* Plus button on left */}
+          {/* Big plus button on the left, more to the right */}
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
 
-          {/* Main receipt in the middle, bigger */}
+          {/* Main receipt (center, bigger) */}
           {mainReceipt && (
             <div style={styles.mainReceipt}>
               <ReceiptCard
@@ -186,7 +186,7 @@ export default function DayPage() {
             </div>
           )}
 
-          {/* Second receipt to the right */}
+          {/* Second receipt (same height) but to the right */}
           {secondReceipt && (
             <div style={styles.secondReceipt}>
               <ReceiptCard
@@ -206,9 +206,8 @@ export default function DayPage() {
             </div>
           )}
 
-          {/* Big arrows near bottom center */}
+          {/* Arrows near bottom center, bigger & closer */}
           <div style={styles.arrowsContainer}>
-            {/* Left arrow */}
             <div
               style={{
                 ...styles.arrow,
@@ -219,7 +218,6 @@ export default function DayPage() {
             >
               ‹
             </div>
-            {/* Right arrow */}
             <div
               style={{
                 ...styles.arrow,
@@ -303,14 +301,13 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
     flexDirection: "column",
-    position: "relative",
   },
   header: {
+    // EXACT same style as your calendar page
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
     padding: "1rem 2rem",
-    flexWrap: "wrap",
   },
   headerLeft: {
     display: "flex",
@@ -335,7 +332,7 @@ const styles = {
     textAlign: "right",
   },
 
-  // No receipts
+  // If no receipts
   noReceiptsContainer: {
     flex: 1,
     position: "relative",
@@ -355,25 +352,25 @@ const styles = {
     position: "relative",
   },
 
-  // Big plus button, further right
+  // Larger plus button, further to the right
   plusContainer: {
     position: "absolute",
-    left: "5rem",
-    top: "50%",
+    left: "9rem", // SHIFTED MORE RIGHT
+    top: "45%",   // SHIFT receipts further up
     transform: "translateY(-50%)",
     cursor: "pointer",
     zIndex: 10,
   },
   plusCircle: {
-    width: "80px",
-    height: "80px",
+    width: "90px",
+    height: "90px",
     backgroundColor: "#fff",
     color: "#091540",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "3rem",
+    fontSize: "3.5rem",
     fontWeight: "bold",
   },
 
@@ -381,53 +378,55 @@ const styles = {
   mainReceipt: {
     position: "absolute",
     left: "50%",
-    top: "50%",
+    top: "45%",   // SHIFT receipts further up
     transform: "translate(-50%, -50%)",
     zIndex: 5,
   },
-  // Second to the right
+  // second at same height
   secondReceipt: {
     position: "absolute",
-    left: "calc(50% + 280px)",
-    top: "calc(50% - 50px)",
+    left: "calc(50% + 300px)", // SHIFT to avoid overlap
+    top: "45%",
+    transform: "translateY(-50%)",
     zIndex: 4,
   },
-  // Third further right
+  // third further right
   thirdReceipt: {
     position: "absolute",
-    left: "calc(50% + 530px)",
-    top: "calc(50% - 30px)",
+    left: "calc(50% + 600px)",
+    top: "45%",
+    transform: "translateY(-50%)",
     zIndex: 3,
   },
 
-  // Big arrows near bottom center
+  // Arrows near bottom center, bigger & closer
   arrowsContainer: {
     position: "absolute",
-    bottom: "3rem",
+    bottom: "1rem", // SHIFT lower
     left: "50%",
     transform: "translateX(-50%)",
     display: "flex",
-    gap: "2rem",
+    gap: "1rem",
     zIndex: 10,
   },
   arrow: {
-    fontSize: "5rem",
+    fontSize: "6rem", // bigger
     fontWeight: "bold",
     userSelect: "none",
   },
 
   // Main card bigger
   mainCard: {
-    width: "280px",
-    minHeight: "340px",
+    width: "300px",
+    minHeight: "360px",
     backgroundColor: "#fff",
     color: "#091540",
     borderRadius: "8px",
     padding: "1rem",
     boxSizing: "border-box",
-    transform: "scale(1.15)",
+    transform: "scale(1.2)",
   },
-  // Side cards smaller
+  // Side cards smaller, same vertical alignment
   sideCard: {
     width: "220px",
     minHeight: "280px",
