@@ -22,7 +22,7 @@ export default function DayPage() {
   const [modalAmount, setModalAmount] = useState("");
   const [modalDescription, setModalDescription] = useState("");
 
-  // Check user
+  // 1) Check user
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -35,7 +35,7 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  // Fetch receipts (oldest first)
+  // 2) Fetch receipts for this day
   async function fetchReceiptsForDay() {
     if (!user || !day) return;
     const now = new Date();
@@ -69,7 +69,7 @@ export default function DayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, day]);
 
-  // Modal logic
+  // 3) Modal Logic
   function openModal() {
     setModalShop("");
     setModalAmount("");
@@ -104,12 +104,12 @@ export default function DayPage() {
     closeModal();
   }
 
-  // Identify main, second, third
+  // 4) Identify main, second, third
   const mainReceipt = receipts[mainIndex] || null;
   const secondReceipt = mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
   const thirdReceipt = mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
 
-  // Arrows
+  // 5) Arrows
   const canScrollLeft = mainIndex > 0;
   const canScrollRight = mainIndex + 1 < receipts.length;
 
@@ -120,15 +120,16 @@ export default function DayPage() {
     if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
-  // Go back
+  // 6) Go back
   function goBack() {
     router.push("/calendar");
   }
 
+  // If user/day not loaded
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // Match date style with CalendarPage
+  // 7) Match date style with CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -140,7 +141,7 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header exactly as CalendarPage */}
+      {/* Header (same style as CalendarPage) */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <h2 style={styles.dayTitle}>
@@ -164,10 +165,12 @@ export default function DayPage() {
         </div>
       ) : (
         <div style={styles.carouselContainer}>
+          {/* Big plus button further right */}
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
 
+          {/* Main receipt */}
           {mainReceipt && (
             <div style={styles.mainReceipt}>
               <ReceiptCard
@@ -177,6 +180,7 @@ export default function DayPage() {
               />
             </div>
           )}
+          {/* Second receipt */}
           {secondReceipt && (
             <div style={styles.secondReceipt}>
               <ReceiptCard
@@ -185,6 +189,7 @@ export default function DayPage() {
               />
             </div>
           )}
+          {/* Third receipt */}
           {thirdReceipt && (
             <div style={styles.thirdReceipt}>
               <ReceiptCard
@@ -194,6 +199,7 @@ export default function DayPage() {
             </div>
           )}
 
+          {/* Arrows near bottom center */}
           <div style={styles.arrowsContainer}>
             <div
               style={{
@@ -219,7 +225,7 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Modal overlay now uses the same background as the page */}
+      {/* Modal with the same background color, but bigger so it covers first receipt */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -288,23 +294,13 @@ function ReceiptCard({ receipt, label, isMain }) {
 const styles = {
   container: {
     minHeight: "100vh",
-    backgroundColor: "#091540",
+    backgroundColor: "#091540", // same background color
     color: "#fff",
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
     flexDirection: "column",
-    position: "relative",
-  },
-  loading: {
-    minHeight: "100vh",
-    backgroundColor: "#091540",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: "'Poppins', sans-serif",
   },
   header: {
-    // EXACT same style as CalendarPage
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
@@ -317,7 +313,7 @@ const styles = {
   },
   dayTitle: {
     margin: 0,
-    fontSize: "4rem", // same as CalendarPage
+    fontSize: "4rem",
     fontWeight: "bold",
   },
   backButton: {
@@ -333,7 +329,6 @@ const styles = {
     textAlign: "right",
   },
 
-  // No receipts
   noReceiptsContainer: {
     flex: 1,
     position: "relative",
@@ -347,17 +342,15 @@ const styles = {
     fontWeight: "bold",
   },
 
-  // Carousel container
   carouselContainer: {
     flex: 1,
     position: "relative",
   },
 
-  // Big plus button, further right
   plusContainer: {
     position: "absolute",
-    left: "12rem", // SHIFT further right
-    top: "40%",    // SHIFT up
+    left: "12rem",
+    top: "40%",
     transform: "translateY(-50%)",
     cursor: "pointer",
     zIndex: 10,
@@ -375,30 +368,28 @@ const styles = {
     fontWeight: "bold",
   },
 
-  // Locked 3-column layout
   mainReceipt: {
     position: "absolute",
     left: "50%",
-    top: "40%", // Adjust this value to vertically center as desired
+    top: "40%",
     transform: "translate(-50%, -50%)",
     zIndex: 5,
   },
   secondReceipt: {
     position: "absolute",
     left: "calc(50% + 300px)",
-    top: "40%", // same vertical alignment as mainReceipt
+    top: "40%",
     transform: "translateY(-50%)",
     zIndex: 4,
   },
   thirdReceipt: {
     position: "absolute",
     left: "calc(50% + 600px)",
-    top: "40%", // same vertical alignment
+    top: "40%",
     transform: "translateY(-50%)",
     zIndex: 3,
   },
 
-  // Arrows near bottom center
   arrowsContainer: {
     position: "absolute",
     bottom: "1rem",
@@ -414,7 +405,6 @@ const styles = {
     userSelect: "none",
   },
 
-  // Main card (bigger)
   mainCard: {
     width: "300px",
     minHeight: "360px",
@@ -425,7 +415,6 @@ const styles = {
     boxSizing: "border-box",
     transform: "scale(1.2)",
   },
-  // Side card (smaller)
   sideCard: {
     width: "220px",
     minHeight: "280px",
@@ -442,7 +431,7 @@ const styles = {
     fontSize: "1.2rem",
   },
 
-  // Modal styles updated: no shadow, solid blue background matching page
+  // Modal with same background color & bigger size
   modalOverlay: {
     zIndex: 9999,
     position: "fixed",
@@ -450,20 +439,20 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "#091540", // same as page background
+    backgroundColor: "transparent", // no shadow
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
   modalContent: {
-    backgroundColor: "#0d1a4d", // a slightly different blue for contrast
-    border: "none",
+    backgroundColor: "#091540", // same as page
+    border: "1px solid #fff",
     borderRadius: "4px",
-    padding: "2rem", // bigger padding
-    width: "90%",
-    maxWidth: "600px", // bigger width
+    padding: "2rem",
+    width: "80%",    // bigger
+    maxWidth: "700px", // covers the first receipt
     color: "#fff",
-    zIndex: 10000,
+    boxShadow: "0 0 20px rgba(0,0,0,0.5)", // add a subtle shadow so it's visible
   },
   modalTitle: {
     marginTop: 0,
@@ -483,19 +472,21 @@ const styles = {
   modalInput: {
     padding: "0.75rem",
     fontSize: "1rem",
-    backgroundColor: "#0d1a4d",
+    backgroundColor: "#091540",
     border: "1px solid #fff",
     color: "#fff",
     borderRadius: "4px",
+    marginBottom: "0.75rem",
   },
   modalTextarea: {
     padding: "0.75rem",
     fontSize: "1rem",
-    backgroundColor: "#0d1a4d",
+    backgroundColor: "#091540",
     border: "1px solid #fff",
     color: "#fff",
     borderRadius: "4px",
     resize: "vertical",
+    marginBottom: "0.75rem",
   },
   modalActions: {
     display: "flex",
