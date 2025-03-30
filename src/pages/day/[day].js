@@ -11,17 +11,17 @@ export default function DayPage() {
   const router = useRouter();
   const { day } = router.query;
 
-  // Auth
+  // Auth state
   const [user, setUser] = useState(null);
 
-  // Carousel
+  // Carousel state: receipts array and current index (center card)
   const [receipts, setReceipts] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // For calculating total spent on this day
+  // Total spent on the day
   const [dayTotal, setDayTotal] = useState(0);
 
-  // Check user
+  // Check user authentication
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -34,13 +34,13 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  // Fetch receipts for this day, sorted by created_at descending
+  // Fetch receipts for this day, sorted by created_at descending (newest first)
   async function fetchReceiptsForDay() {
     if (!user || !day) return;
 
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth() + 1; // 0-based => +1
+    const month = now.getMonth() + 1; // month is zero-based so +1
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     const { data, error } = await supabase
@@ -55,7 +55,7 @@ export default function DayPage() {
       return;
     }
 
-    // Calculate total
+    // Calculate total for the day
     let total = 0;
     data.forEach((r) => {
       total += parseFloat(r.amount) || 0;
@@ -63,34 +63,33 @@ export default function DayPage() {
     setDayTotal(total);
 
     setReceipts(data);
-    setCurrentIndex(0); // Show newest (index 0) in the center
+    setCurrentIndex(0); // Ensure newest (index 0) is centered
   }
 
-  // Initial + refresh after day changes
+  // Refresh receipts when user and day are available
   useEffect(() => {
     fetchReceiptsForDay();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, day]); // once user and day are known
+  }, [user, day]);
 
   // ========== ADD A NEW TEMP RECEIPT ==========
   function handleAddNewReceipt() {
-    // Prepend a temp receipt with blank data
+    // Create a temp receipt object with blank fields
     const tempReceipt = {
-      id: "temp", // a special ID
+      id: "temp", // special id for temporary receipt
       shop_name: "",
       amount: "",
       description: "",
-      isNew: true, // flag to show it's editable
+      isNew: true, // flag for editable mode
     };
 
-    // Put it at index 0, shift existing receipts to the right
+    // Prepend the temp receipt so it becomes the newest and center card
     setReceipts((prev) => [tempReceipt, ...prev]);
-    setCurrentIndex(0); // make the new one the center
+    setCurrentIndex(0);
   }
 
   // ========== SAVE A TEMP RECEIPT ==========
   async function handleSaveTempReceipt(index, shopName, amount, description) {
-    // Insert into Supabase
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
@@ -99,7 +98,7 @@ export default function DayPage() {
     const { data, error } = await supabase.from("receipts").insert([
       {
         user_id: user.id,
-        shop_name: shopName,
+        shop_name,
         amount: amount ? parseFloat(amount) : 0,
         description,
         date: dateStr,
@@ -111,51 +110,52 @@ export default function DayPage() {
       return;
     }
 
-    // data[0] is the newly inserted row
     const newReceipt = data[0];
-
-    // Replace the temp receipt with the real one
+    // Replace the temp receipt with the new one
     setReceipts((prev) => {
       const newArray = [...prev];
       newArray[index] = newReceipt;
       return newArray;
     });
 
-    // Re-calc total
+    // Recalculate total and reset currentIndex to show the new receipt in center
     setDayTotal((prev) => prev + parseFloat(newReceipt.amount || 0));
+    setCurrentIndex(0);
   }
 
-  // ========== SCROLLING ==========
+  // ========== SCROLLING FUNCTIONS ==========
+  // Here, left means scrolling to an earlier receipt (lower index) and right to a newer receipt (higher index)
   function scrollLeft() {
-    if (currentIndex < receipts.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    }
-  }
-  function scrollRight() {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
     }
   }
+  function scrollRight() {
+    if (currentIndex < receipts.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    }
+  }
 
-  // If not loaded
+  // If user or day not loaded yet
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // ========== DETERMINE WHICH 3 RECEIPTS TO SHOW (left, center, right) ==========
+  // ========== DETERMINE WHICH 3 RECEIPTS TO SHOW ==========
+  // Now, center is the currentIndex,
+  // left card is currentIndex - 1 (if exists),
+  // right card is currentIndex + 1 (if exists).
   const center = currentIndex;
-  const left = currentIndex + 1 <= receipts.length - 1 ? currentIndex + 1 : null;
-  const right = currentIndex - 1 >= 0 ? currentIndex - 1 : null;
+  const left = currentIndex - 1 >= 0 ? currentIndex - 1 : null;
+  const right = currentIndex + 1 < receipts.length ? currentIndex + 1 : null;
 
-  // left arrow disabled if right===null
-  const leftArrowDisabled = right === null;
-  // right arrow disabled if left===null
-  const rightArrowDisabled = left === null;
+  const leftArrowDisabled = currentIndex === 0;
+  const rightArrowDisabled = currentIndex === receipts.length - 1;
 
-  // Day/Month/Year Label
+  // Day/Month/Year Label (for header)
   const dateObj = new Date();
   const monthNames = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ];
   const monthName = monthNames[dateObj.getMonth()];
   const yearVal = dateObj.getFullYear();
@@ -163,7 +163,7 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Top bar: "DD Month YYYY" on left, total on right */}
+      {/* Top bar: Display Day Month Year on left, total spend on right */}
       <header style={styles.header}>
         <h2 style={styles.dayTitle}>
           {dayVal} {monthName} {yearVal}
@@ -173,9 +173,9 @@ export default function DayPage() {
         </div>
       </header>
 
-      {/* Main area: plus sign on left, arrows, 3 receipts in the middle */}
+      {/* Main area: Plus sign to add new receipt, carousel arrows, and 3 receipt cards */}
       <div style={styles.main}>
-        {/* Big plus sign to add new receipt */}
+        {/* Plus sign (always on the left) */}
         <div style={styles.plusContainer} onClick={handleAddNewReceipt}>
           <div style={styles.plusCircle}>+</div>
         </div>
@@ -194,9 +194,9 @@ export default function DayPage() {
           &lt;
         </div>
 
-        {/* 3 Cards: left, center, right */}
+        {/* Cards container */}
         <div style={styles.cardsContainer}>
-          {/* Left card */}
+          {/* Left card (if exists) */}
           {left !== null && receipts[left] && (
             <ReceiptCard
               receipt={receipts[left]}
@@ -214,7 +214,7 @@ export default function DayPage() {
               onSave={handleSaveTempReceipt}
             />
           )}
-          {/* Right card */}
+          {/* Right card (if exists) */}
           {right !== null && receipts[right] && (
             <ReceiptCard
               receipt={receipts[right]}
@@ -243,8 +243,7 @@ export default function DayPage() {
   );
 }
 
-/** A single receipt card
-    If `receipt.isNew` is true or `receipt.id === "temp"`, we show an editable form. */
+/** ReceiptCard Component **/
 function ReceiptCard({ receipt, index, isCenter, onSave }) {
   const [shopName, setShopName] = useState(receipt.shop_name || "");
   const [amount, setAmount] = useState(receipt.amount || "");
@@ -253,12 +252,10 @@ function ReceiptCard({ receipt, index, isCenter, onSave }) {
   const isTemp = receipt.id === "temp";
 
   function handleSave() {
-    // call parent to insert into DB
     onSave(index, shopName, amount, description);
   }
 
   if (isTemp) {
-    // Editable form for the new (temp) receipt
     return (
       <div style={{ ...styles.card, ...(!isCenter ? styles.sideCard : {}) }}>
         <h3 style={styles.cardTitle}>New Receipt</h3>
@@ -295,7 +292,6 @@ function ReceiptCard({ receipt, index, isCenter, onSave }) {
     );
   }
 
-  // Otherwise, it's an existing receipt (read-only)
   return (
     <div style={{ ...styles.card, ...(!isCenter ? styles.sideCard : {}) }}>
       <h3 style={styles.cardTitle}>Receipt</h3>
@@ -336,7 +332,7 @@ const styles = {
   },
   dayTitle: {
     margin: 0,
-    fontSize: "2rem",
+    fontSize: "4rem", // Bold, 4rem as requested
     fontWeight: "bold",
   },
   dayTotal: {
@@ -392,7 +388,6 @@ const styles = {
     justifyContent: "flex-start",
   },
   sideCard: {
-    // style for left/right cards if you want them smaller or dimmer
     opacity: 0.8,
   },
   cardTitle: {
