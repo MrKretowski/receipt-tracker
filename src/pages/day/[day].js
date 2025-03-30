@@ -13,10 +13,10 @@ export default function DayPage() {
 
   // Auth state
   const [user, setUser] = useState(null);
-  // Receipts array in ascending order (oldest first)
+  // Receipts array (in ascending order: oldest first)
   const [receipts, setReceipts] = useState([]);
-  // Index for the carousel window
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // mainIndex indicates which receipt is currently in the CENTER
+  const [mainIndex, setMainIndex] = useState(0);
   // Total spent on this day
   const [dayTotal, setDayTotal] = useState(0);
 
@@ -26,7 +26,7 @@ export default function DayPage() {
   const [modalAmount, setModalAmount] = useState("");
   const [modalDescription, setModalDescription] = useState("");
 
-  // Check user on mount
+  // Check user authentication on mount
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -44,7 +44,7 @@ export default function DayPage() {
     if (!user || !day) return;
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    const month = now.getMonth() + 1; // adjust for 0-based month
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     const { data, error } = await supabase
@@ -65,7 +65,8 @@ export default function DayPage() {
     });
     setDayTotal(total);
     setReceipts(data);
-    setCurrentIndex(0);
+    // Ensure the first receipt remains main initially
+    setMainIndex(0);
   }
 
   useEffect(() => {
@@ -104,33 +105,44 @@ export default function DayPage() {
       console.error("Error adding receipt:", error);
       return;
     }
-    // Refresh receipts and close modal
+    // After successful insertion, refresh receipts and close modal immediately
     await fetchReceiptsForDay();
     closeModal();
   }
 
   // ---------- Carousel Logic ----------
-  const visibleCount = 3; // up to 3 receipts
-  const visibleReceipts = receipts.slice(currentIndex, currentIndex + visibleCount);
-  const canScrollRight = currentIndex > 0;
-  const canScrollLeft = currentIndex < receipts.length - visibleCount;
+  // Fixed 3-column layout:
+  // left card: receipts[mainIndex - 1] (if exists)
+  // center card: receipts[mainIndex]
+  // right card: receipts[mainIndex + 1] (if exists)
+  const leftReceipt = mainIndex > 0 ? receipts[mainIndex - 1] : null;
+  const centerReceipt = receipts[mainIndex] || null;
+  const rightReceipt = mainIndex < receipts.length - 1 ? receipts[mainIndex + 1] : null;
 
-  function scrollRight() {
-    if (canScrollRight) {
-      setCurrentIndex(currentIndex - 1);
+  const leftArrowEnabled = mainIndex > 0;
+  const rightArrowEnabled = mainIndex < receipts.length - 1;
+
+  function scrollLeft() {
+    if (rightArrowEnabled) {
+      setMainIndex(mainIndex + 1);
     }
   }
-  function scrollLeft() {
-    if (canScrollLeft) {
-      setCurrentIndex(currentIndex + 1);
+  function scrollRight() {
+    if (leftArrowEnabled) {
+      setMainIndex(mainIndex - 1);
     }
+  }
+
+  // ---------- Back Button ----------
+  function goBack() {
+    router.push("/calendar");
   }
 
   // ---------- Render Conditions ----------
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // Match the date style with the CalendarPage
+  // Header Date (must match CalendarPage exactly)
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -142,27 +154,22 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header EXACT style as CalendarPage */}
+      {/* Header: date on the left (4rem bold) and spent on the right */}
       <header style={styles.header}>
-        {/* Date on the left, 4rem bold */}
-        <h2 style={styles.dayTitle}>
-          {dayVal} {headerMonth}, {headerYear}
-        </h2>
-
-        {/* "Back" button & "Spent" on the right */}
-        <div style={{ textAlign: "right" }}>
-          <p style={{ margin: 0, fontSize: "1.2rem" }}>
-            <button onClick={() => router.push("/calendar")} style={styles.backButton}>
-              ← Back
-            </button>
-          </p>
-          <p style={{ margin: 0, fontSize: "1.2rem" }}>
-            Spent: <strong>${formatCurrency(dayTotal)}</strong>
-          </p>
+        <div style={styles.headerLeft}>
+          <h2 style={styles.dayTitle}>
+            {dayVal} {headerMonth}, {headerYear}
+          </h2>
+          <button onClick={goBack} style={styles.backButton}>
+            ← Back
+          </button>
+        </div>
+        <div style={styles.dayTotal}>
+          Spent: <strong>${formatCurrency(dayTotal)}</strong>
         </div>
       </header>
 
-      {/* Main area: plus button, carousel, or "No receipts" */}
+      {/* Main Carousel Area */}
       <div style={styles.main}>
         {/* Plus button on the left */}
         <div style={styles.plusContainer} onClick={openModal}>
@@ -174,7 +181,7 @@ export default function DayPage() {
         ) : (
           <div style={styles.carousel}>
             {/* Left arrow */}
-            {canScrollRight ? (
+            {leftArrowEnabled ? (
               <div style={{ ...styles.arrow, cursor: "pointer" }} onClick={scrollRight}>
                 &lt;
               </div>
@@ -182,15 +189,33 @@ export default function DayPage() {
               <div style={{ ...styles.arrow, opacity: 0.3 }}>&lt;</div>
             )}
 
-            {/* Visible receipts */}
+            {/* Fixed 3-column layout */}
             <div style={styles.cardsContainer}>
-              {visibleReceipts.map((receipt, i) => (
-                <ReceiptCard key={currentIndex + i} receipt={receipt} isMain={i === 0} />
-              ))}
+              {/* Left card (if exists) */}
+              {leftReceipt && (
+                <ReceiptCard
+                  receipt={leftReceipt}
+                  label={`#${mainIndex}`}
+                />
+              )}
+              {/* Center card */}
+              {centerReceipt && (
+                <ReceiptCard
+                  receipt={centerReceipt}
+                  label={`#${mainIndex + 1}`}
+                />
+              )}
+              {/* Right card (if exists) */}
+              {rightReceipt && (
+                <ReceiptCard
+                  receipt={rightReceipt}
+                  label={`#${mainIndex + 2}`}
+                />
+              )}
             </div>
 
             {/* Right arrow */}
-            {canScrollLeft ? (
+            {rightArrowEnabled ? (
               <div style={{ ...styles.arrow, cursor: "pointer" }} onClick={scrollLeft}>
                 &gt;
               </div>
@@ -201,7 +226,7 @@ export default function DayPage() {
         )}
       </div>
 
-      {/* Minimal Modal */}
+      {/* Minimal Modal Pop-Up */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -247,10 +272,10 @@ export default function DayPage() {
   );
 }
 
-function ReceiptCard({ receipt, isMain }) {
+function ReceiptCard({ receipt, label }) {
   return (
     <div style={styles.card}>
-      <h3 style={styles.cardTitle}>{isMain ? "Main Receipt" : "Receipt"}</h3>
+      <h3 style={styles.cardTitle}>{label}</h3>
       <p><strong>Shop:</strong> {receipt.shop_name}</p>
       <p><strong>Amount:</strong> {receipt.amount}</p>
       <p><strong>Description:</strong> {receipt.description}</p>
@@ -269,18 +294,32 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
     flexDirection: "column",
+    padding: "1rem",
     position: "relative",
   },
+  loading: {
+    minHeight: "100vh",
+    backgroundColor: "#091540",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "'Poppins', sans-serif",
+  },
   header: {
-    // EXACT same style as CalendarPage
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     padding: "1rem 2rem",
+    flexWrap: "wrap",
+  },
+  headerLeft: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
   dayTitle: {
     margin: 0,
-    fontSize: "4rem", // same size
+    fontSize: "4rem", // exactly as CalendarPage
     fontWeight: "bold",
   },
   backButton: {
@@ -288,7 +327,7 @@ const styles = {
     background: "none",
     border: "none",
     color: "#fff",
-    fontSize: "1rem",
+    fontSize: "1.5rem",
     cursor: "pointer",
   },
   dayTotal: {
@@ -353,7 +392,7 @@ const styles = {
     marginBottom: "0.5rem",
     fontSize: "1.1rem",
   },
-  // Modal
+  // Modal styles (minimalistic, transparent pop-up)
   modalOverlay: {
     position: "fixed",
     top: 0,
