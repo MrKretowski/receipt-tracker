@@ -125,11 +125,10 @@ export default function DayPage() {
     router.push("/calendar");
   }
 
-  // If user/day not loaded
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // Match date style with your CalendarPage
+  // Match date style with CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -141,10 +140,9 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header EXACT style as CalendarPage */}
+      {/* Header exactly like CalendarPage */}
       <header style={styles.header}>
-        {/* Left side: Day, Month, Year in 4rem bold */}
-        <div>
+        <div style={styles.headerLeft}>
           <h2 style={styles.dayTitle}>
             {dayVal} {headerMonth}, {headerYear}
           </h2>
@@ -152,8 +150,6 @@ export default function DayPage() {
             ← Back
           </button>
         </div>
-
-        {/* Right side: total spent */}
         <div style={styles.dayTotal}>
           Spent: <strong>${dayTotal.toFixed(2)}</strong>
         </div>
@@ -161,7 +157,6 @@ export default function DayPage() {
 
       {receipts.length === 0 ? (
         <div style={styles.noReceiptsContainer}>
-          {/* Big plus button further right */}
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
@@ -169,12 +164,10 @@ export default function DayPage() {
         </div>
       ) : (
         <div style={styles.carouselContainer}>
-          {/* Plus button further right */}
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
 
-          {/* Main receipt in the middle */}
           {mainReceipt && (
             <div style={styles.mainReceipt}>
               <ReceiptCard
@@ -184,7 +177,6 @@ export default function DayPage() {
               />
             </div>
           )}
-          {/* Second receipt to the right, same height */}
           {secondReceipt && (
             <div style={styles.secondReceipt}>
               <ReceiptCard
@@ -193,7 +185,6 @@ export default function DayPage() {
               />
             </div>
           )}
-          {/* Third receipt further right, same height */}
           {thirdReceipt && (
             <div style={styles.thirdReceipt}>
               <ReceiptCard
@@ -203,7 +194,6 @@ export default function DayPage() {
             </div>
           )}
 
-          {/* Big arrows near bottom center */}
           <div style={styles.arrowsContainer}>
             <div
               style={{
@@ -229,7 +219,7 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Minimal Modal */}
+      {/* Modal with solid blue background */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -279,7 +269,6 @@ function ReceiptCard({ receipt, label, isMain }) {
   return (
     <div style={isMain ? styles.mainCard : styles.sideCard}>
       <h3 style={styles.cardTitle}>{label}</h3>
-      {/* bigger spacing between lines */}
       <p style={{ marginBottom: "0.75rem" }}>
         <strong>Shop:</strong> {receipt.shop_name}
       </p>
@@ -304,17 +293,31 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
     flexDirection: "column",
+    position: "relative",
+  },
+  loading: {
+    minHeight: "100vh",
+    backgroundColor: "#091540",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "'Poppins', sans-serif",
   },
   header: {
-    // EXACT same style as your CalendarPage
+    // EXACT same style as CalendarPage
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     padding: "1rem 2rem",
+  },
+  headerLeft: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
   dayTitle: {
     margin: 0,
-    fontSize: "4rem",
+    fontSize: "4rem", // same as CalendarPage
     fontWeight: "bold",
   },
   backButton: {
@@ -344,13 +347,13 @@ const styles = {
     fontWeight: "bold",
   },
 
-  // Carousel
+  // Carousel container
   carouselContainer: {
     flex: 1,
     position: "relative",
   },
 
-  // Big plus button, more to the right
+  // Plus button
   plusContainer: {
     position: "absolute",
     left: "12rem", // SHIFT further right
@@ -372,15 +375,14 @@ const styles = {
     fontWeight: "bold",
   },
 
-  // Main receipt bigger, at same height
+  // Locked 3-column layout
   mainReceipt: {
     position: "absolute",
     left: "50%",
-    top: "40%",  // SHIFT up
+    top: "40%", // you can adjust this value to align vertically
     transform: "translate(-50%, -50%)",
     zIndex: 5,
   },
-  // second at same height
   secondReceipt: {
     position: "absolute",
     left: "calc(50% + 300px)",
@@ -388,7 +390,6 @@ const styles = {
     transform: "translateY(-50%)",
     zIndex: 4,
   },
-  // third further right, same height
   thirdReceipt: {
     position: "absolute",
     left: "calc(50% + 600px)",
@@ -397,7 +398,7 @@ const styles = {
     zIndex: 3,
   },
 
-  // Big arrows near bottom center
+  // Arrows near bottom center
   arrowsContainer: {
     position: "absolute",
     bottom: "1rem",
@@ -408,12 +409,12 @@ const styles = {
     zIndex: 10,
   },
   arrow: {
-    fontSize: "7rem", // bigger
+    fontSize: "7rem",
     fontWeight: "bold",
     userSelect: "none",
   },
 
-  // Main card bigger
+  // Main card (bigger)
   mainCard: {
     width: "300px",
     minHeight: "360px",
@@ -424,7 +425,7 @@ const styles = {
     boxSizing: "border-box",
     transform: "scale(1.2)",
   },
-  // Side cards smaller, same vertical alignment
+  // Side card (smaller)
   sideCard: {
     width: "220px",
     minHeight: "280px",
@@ -441,28 +442,28 @@ const styles = {
     fontSize: "1.2rem",
   },
 
-  // Modal on top
+  // Modal styles updated: solid blue background for modal content
   modalOverlay: {
-    zIndex: 9999, // Ensure it's above receipts
+    zIndex: 9999,
     position: "fixed",
     top: 0,
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(9,21,64,0.8)",
+    backgroundColor: "rgba(0,0,0,0.8)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
   modalContent: {
-    backgroundColor: "transparent",
-    border: "1px solid #fff",
+    backgroundColor: "#0d1a4d", // solid blue
+    border: "none",
     borderRadius: "4px",
     padding: "1rem",
     width: "90%",
     maxWidth: "400px",
     color: "#fff",
-    zIndex: 99999,
+    zIndex: 10000,
   },
   modalTitle: {
     marginTop: 0,
@@ -482,7 +483,7 @@ const styles = {
   modalInput: {
     padding: "0.5rem",
     fontSize: "1rem",
-    backgroundColor: "transparent",
+    backgroundColor: "#0d1a4d",
     border: "1px solid #fff",
     color: "#fff",
     borderRadius: "4px",
@@ -490,7 +491,7 @@ const styles = {
   modalTextarea: {
     padding: "0.5rem",
     fontSize: "1rem",
-    backgroundColor: "transparent",
+    backgroundColor: "#0d1a4d",
     border: "1px solid #fff",
     color: "#fff",
     borderRadius: "4px",
