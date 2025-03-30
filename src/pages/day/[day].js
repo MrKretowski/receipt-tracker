@@ -445,14 +445,14 @@ const styles = {
     justifyContent: "center",
   },
   modalContent: {
-    backgroundColor: "#091540", // same as page
-    border: "1px solid #fff",
+    backgroundColor: "#091540", // same as the page background
+    border: "none",             // remove the white border
     borderRadius: "4px",
     padding: "2rem",
-    width: "80%",    // bigger
-    maxWidth: "700px", // covers the first receipt
+    width: "300px",             // match the receipt width
     color: "#fff",
-    boxShadow: "0 0 20px rgba(0,0,0,0.5)", // add a subtle shadow so it's visible
+    // Optionally, remove the boxShadow if you want an even cleaner look:
+    // boxShadow: "none",
   },
   modalTitle: {
     marginTop: 0,
