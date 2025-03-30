@@ -35,12 +35,12 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  // 2) Fetch receipts for this day
+  // 2) Fetch receipts
   async function fetchReceiptsForDay() {
     if (!user || !day) return;
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth() + 1; // 0-based => +1
+    const month = now.getMonth() + 1;
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     const { data, error } = await supabase
@@ -79,10 +79,6 @@ export default function DayPage() {
   function closeModal() {
     setShowModal(false);
   }
-
-  // Key change: Insert new receipt at index 0, shift old receipts right
-  // So old main effectively moves to center or right,
-  // leaving “nothing” in the old main position at first glance.
   async function handleModalSave() {
     if (!modalShop || !modalAmount) return;
     const now = new Date();
@@ -104,18 +100,7 @@ export default function DayPage() {
       console.error(error);
       return;
     }
-    const newReceipt = data[0];
-
-    // Update total locally
-    setDayTotal((prev) => prev + parseFloat(newReceipt.amount));
-
-    // SHIFT existing receipts to the right by inserting new at index 0
-    setReceipts((prev) => [newReceipt, ...prev]);
-
-    // Possibly adjust mainIndex so that old main moves left
-    // e.g., if old main was 0, it becomes 1
-    setMainIndex((prev) => prev + 1);
-
+    await fetchReceiptsForDay();
     closeModal();
   }
 
@@ -156,7 +141,7 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
+      {/* Header (same style as CalendarPage) */}
       <header style={styles.header}>
         <div>
           <h2 style={styles.dayTitle}>
@@ -180,7 +165,7 @@ export default function DayPage() {
         </div>
       ) : (
         <div style={styles.carouselContainer}>
-          {/* Big plus button further right */}
+          {/* Plus button further right */}
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
@@ -214,7 +199,7 @@ export default function DayPage() {
             </div>
           )}
 
-          {/* Arrows near bottom center */}
+          {/* Big arrows near bottom center */}
           <div style={styles.arrowsContainer}>
             <div
               style={{
