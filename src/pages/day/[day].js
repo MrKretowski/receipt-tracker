@@ -22,7 +22,7 @@ export default function DayPage() {
   const [modalAmount, setModalAmount] = useState("");
   const [modalDescription, setModalDescription] = useState("");
 
-  // 1) Check user
+  // Check user
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -35,7 +35,7 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  // 2) Fetch receipts
+  // Fetch receipts (oldest first)
   async function fetchReceiptsForDay() {
     if (!user || !day) return;
     const now = new Date();
@@ -51,7 +51,7 @@ export default function DayPage() {
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error(error);
+      console.error("Error fetching receipts:", error);
       return;
     }
 
@@ -69,7 +69,7 @@ export default function DayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, day]);
 
-  // 3) Modal Logic
+  // Modal logic
   function openModal() {
     setModalShop("");
     setModalAmount("");
@@ -104,12 +104,12 @@ export default function DayPage() {
     closeModal();
   }
 
-  // 4) Identify main, second, third
+  // Identify main, second, third
   const mainReceipt = receipts[mainIndex] || null;
   const secondReceipt = mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
   const thirdReceipt = mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
 
-  // 5) Arrows
+  // Arrows
   const canScrollLeft = mainIndex > 0;
   const canScrollRight = mainIndex + 1 < receipts.length;
 
@@ -120,7 +120,7 @@ export default function DayPage() {
     if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
-  // 6) Go back
+  // Go back
   function goBack() {
     router.push("/calendar");
   }
@@ -129,7 +129,7 @@ export default function DayPage() {
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // 7) Match date style with CalendarPage
+  // Match date style with your CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -141,8 +141,9 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header (same style as CalendarPage) */}
+      {/* Header EXACT style as CalendarPage */}
       <header style={styles.header}>
+        {/* Left side: Day, Month, Year in 4rem bold */}
         <div>
           <h2 style={styles.dayTitle}>
             {dayVal} {headerMonth}, {headerYear}
@@ -151,6 +152,8 @@ export default function DayPage() {
             ← Back
           </button>
         </div>
+
+        {/* Right side: total spent */}
         <div style={styles.dayTotal}>
           Spent: <strong>${dayTotal.toFixed(2)}</strong>
         </div>
@@ -158,6 +161,7 @@ export default function DayPage() {
 
       {receipts.length === 0 ? (
         <div style={styles.noReceiptsContainer}>
+          {/* Big plus button further right */}
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
@@ -170,7 +174,7 @@ export default function DayPage() {
             <div style={styles.plusCircle}>+</div>
           </div>
 
-          {/* Main receipt */}
+          {/* Main receipt in the middle */}
           {mainReceipt && (
             <div style={styles.mainReceipt}>
               <ReceiptCard
@@ -180,7 +184,7 @@ export default function DayPage() {
               />
             </div>
           )}
-          {/* Second receipt */}
+          {/* Second receipt to the right, same height */}
           {secondReceipt && (
             <div style={styles.secondReceipt}>
               <ReceiptCard
@@ -189,7 +193,7 @@ export default function DayPage() {
               />
             </div>
           )}
-          {/* Third receipt */}
+          {/* Third receipt further right, same height */}
           {thirdReceipt && (
             <div style={styles.thirdReceipt}>
               <ReceiptCard
@@ -225,7 +229,7 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Darker overlay & semi-opaque modal with blur */}
+      {/* Minimal Modal */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -275,6 +279,7 @@ function ReceiptCard({ receipt, label, isMain }) {
   return (
     <div style={isMain ? styles.mainCard : styles.sideCard}>
       <h3 style={styles.cardTitle}>{label}</h3>
+      {/* bigger spacing between lines */}
       <p style={{ marginBottom: "0.75rem" }}>
         <strong>Shop:</strong> {receipt.shop_name}
       </p>
@@ -345,7 +350,7 @@ const styles = {
     position: "relative",
   },
 
-  // Big plus button
+  // Big plus button, more to the right
   plusContainer: {
     position: "absolute",
     left: "12rem", // SHIFT further right
@@ -367,15 +372,15 @@ const styles = {
     fontWeight: "bold",
   },
 
-  // Main receipt in center
+  // Main receipt bigger, at same height
   mainReceipt: {
     position: "absolute",
     left: "50%",
-    top: "40%",
+    top: "40%",  // SHIFT up
     transform: "translate(-50%, -50%)",
     zIndex: 5,
   },
-  // second, same height
+  // second at same height
   secondReceipt: {
     position: "absolute",
     left: "calc(50% + 300px)",
@@ -383,7 +388,7 @@ const styles = {
     transform: "translateY(-50%)",
     zIndex: 4,
   },
-  // third
+  // third further right, same height
   thirdReceipt: {
     position: "absolute",
     left: "calc(50% + 600px)",
@@ -392,7 +397,7 @@ const styles = {
     zIndex: 3,
   },
 
-  // Arrows near bottom center
+  // Big arrows near bottom center
   arrowsContainer: {
     position: "absolute",
     bottom: "1rem",
@@ -403,7 +408,7 @@ const styles = {
     zIndex: 10,
   },
   arrow: {
-    fontSize: "7rem",
+    fontSize: "7rem", // bigger
     fontWeight: "bold",
     userSelect: "none",
   },
@@ -419,7 +424,7 @@ const styles = {
     boxSizing: "border-box",
     transform: "scale(1.2)",
   },
-  // Side cards smaller
+  // Side cards smaller, same vertical alignment
   sideCard: {
     width: "220px",
     minHeight: "280px",
@@ -436,28 +441,28 @@ const styles = {
     fontSize: "1.2rem",
   },
 
-  // Modal with darker overlay & semi-opaque background
+  // Modal on top
   modalOverlay: {
-    zIndex: 9999, // above receipts
+    zIndex: 9999, // Ensure it's above receipts
     position: "fixed",
     top: 0,
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(0,0,0,0.8)", // darker
+    backgroundColor: "rgba(9,21,64,0.8)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
   modalContent: {
-    backgroundColor: "rgba(255,255,255,0.1)", // slight opacity
-    backdropFilter: "blur(6px)", // add blur
+    backgroundColor: "transparent",
     border: "1px solid #fff",
     borderRadius: "4px",
     padding: "1rem",
     width: "90%",
     maxWidth: "400px",
     color: "#fff",
+    zIndex: 99999,
   },
   modalTitle: {
     marginTop: 0,
