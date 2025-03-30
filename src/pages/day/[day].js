@@ -35,7 +35,7 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  // 2) Fetch receipts (oldest first)
+  // 2) Fetch receipts for this day
   async function fetchReceiptsForDay() {
     if (!user || !day) return;
     const now = new Date();
@@ -129,7 +129,7 @@ export default function DayPage() {
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // 7) Date style
+  // 7) Match date style with CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -141,10 +141,9 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header (like CalendarPage but smaller dayTitle) */}
+      {/* Header (same style as CalendarPage) */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
-          {/* Date is 3rem now instead of 4rem */}
           <h2 style={styles.dayTitle}>
             {dayVal} {headerMonth}, {headerYear}
           </h2>
@@ -166,6 +165,7 @@ export default function DayPage() {
         </div>
       ) : (
         <div style={styles.carouselContainer}>
+          {/* Big plus button further right */}
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
@@ -199,7 +199,7 @@ export default function DayPage() {
             </div>
           )}
 
-          {/* Big arrows near bottom center */}
+          {/* Arrows near bottom center */}
           <div style={styles.arrowsContainer}>
             <div
               style={{
@@ -225,6 +225,7 @@ export default function DayPage() {
         </div>
       )}
 
+      {/* Modal with the same background color, but bigger so it covers first receipt */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -293,7 +294,7 @@ function ReceiptCard({ receipt, label, isMain }) {
 const styles = {
   container: {
     minHeight: "100vh",
-    backgroundColor: "#091540",
+    backgroundColor: "#091540", // same background color
     color: "#fff",
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
@@ -308,10 +309,11 @@ const styles = {
   headerLeft: {
     display: "flex",
     flexDirection: "column",
+    alignItems: "flex-start",
   },
   dayTitle: {
     margin: 0,
-    fontSize: "3rem", // smaller than 4rem
+    fontSize: "4rem",
     fontWeight: "bold",
   },
   backButton: {
@@ -324,6 +326,7 @@ const styles = {
   },
   dayTotal: {
     fontSize: "1.2rem",
+    textAlign: "right",
   },
 
   noReceiptsContainer: {
@@ -428,7 +431,7 @@ const styles = {
     fontSize: "1.2rem",
   },
 
-  // Minimal modal
+  // Modal with same background color & bigger size
   modalOverlay: {
     zIndex: 9999,
     position: "fixed",
@@ -436,25 +439,25 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(0,0,0,0.8)",
+    backgroundColor: "transparent", // no shadow
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
   modalContent: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    backdropFilter: "blur(6px)",
+    backgroundColor: "#091540", // same as page
     border: "1px solid #fff",
     borderRadius: "4px",
-    padding: "1rem",
-    width: "60%", // narrower
-    maxWidth: "600px",
+    padding: "2rem",
+    width: "80%",    // bigger
+    maxWidth: "700px", // covers the first receipt
     color: "#fff",
+    boxShadow: "0 0 20px rgba(0,0,0,0.5)", // add a subtle shadow so it's visible
   },
   modalTitle: {
     marginTop: 0,
     marginBottom: "1rem",
-    fontSize: "1.2rem",
+    fontSize: "1.5rem",
   },
   modalGroup: {
     marginBottom: "1rem",
@@ -467,18 +470,18 @@ const styles = {
     marginBottom: "0.3rem",
   },
   modalInput: {
-    padding: "0.5rem",
+    padding: "0.75rem",
     fontSize: "1rem",
-    backgroundColor: "transparent",
+    backgroundColor: "#091540",
     border: "1px solid #fff",
     color: "#fff",
     borderRadius: "4px",
     marginBottom: "0.75rem",
   },
   modalTextarea: {
-    padding: "0.5rem",
+    padding: "0.75rem",
     fontSize: "1rem",
-    backgroundColor: "transparent",
+    backgroundColor: "#091540",
     border: "1px solid #fff",
     color: "#fff",
     borderRadius: "4px",
@@ -491,7 +494,7 @@ const styles = {
     marginTop: "1rem",
   },
   modalButton: {
-    padding: "0.5rem 1rem",
+    padding: "0.75rem 1.5rem",
     fontSize: "1rem",
     cursor: "pointer",
     backgroundColor: "#fff",
