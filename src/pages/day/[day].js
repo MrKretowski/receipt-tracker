@@ -140,7 +140,7 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header exactly like CalendarPage */}
+      {/* Header exactly as CalendarPage */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <h2 style={styles.dayTitle}>
@@ -219,7 +219,7 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Modal with solid blue background */}
+      {/* Modal overlay now uses the same background as the page */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -353,7 +353,7 @@ const styles = {
     position: "relative",
   },
 
-  // Plus button
+  // Big plus button, further right
   plusContainer: {
     position: "absolute",
     left: "12rem", // SHIFT further right
@@ -379,21 +379,21 @@ const styles = {
   mainReceipt: {
     position: "absolute",
     left: "50%",
-    top: "40%", // you can adjust this value to align vertically
+    top: "40%", // Adjust this value to vertically center as desired
     transform: "translate(-50%, -50%)",
     zIndex: 5,
   },
   secondReceipt: {
     position: "absolute",
     left: "calc(50% + 300px)",
-    top: "40%",
+    top: "40%", // same vertical alignment as mainReceipt
     transform: "translateY(-50%)",
     zIndex: 4,
   },
   thirdReceipt: {
     position: "absolute",
     left: "calc(50% + 600px)",
-    top: "40%",
+    top: "40%", // same vertical alignment
     transform: "translateY(-50%)",
     zIndex: 3,
   },
@@ -442,7 +442,7 @@ const styles = {
     fontSize: "1.2rem",
   },
 
-  // Modal styles updated: solid blue background for modal content
+  // Modal styles updated: no shadow, solid blue background matching page
   modalOverlay: {
     zIndex: 9999,
     position: "fixed",
@@ -450,25 +450,25 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(0,0,0,0.8)",
+    backgroundColor: "#091540", // same as page background
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
   modalContent: {
-    backgroundColor: "#0d1a4d", // solid blue
+    backgroundColor: "#0d1a4d", // a slightly different blue for contrast
     border: "none",
     borderRadius: "4px",
-    padding: "1rem",
+    padding: "2rem", // bigger padding
     width: "90%",
-    maxWidth: "400px",
+    maxWidth: "600px", // bigger width
     color: "#fff",
     zIndex: 10000,
   },
   modalTitle: {
     marginTop: 0,
     marginBottom: "1rem",
-    fontSize: "1.2rem",
+    fontSize: "1.5rem",
   },
   modalGroup: {
     marginBottom: "1rem",
@@ -481,7 +481,7 @@ const styles = {
     marginBottom: "0.3rem",
   },
   modalInput: {
-    padding: "0.5rem",
+    padding: "0.75rem",
     fontSize: "1rem",
     backgroundColor: "#0d1a4d",
     border: "1px solid #fff",
@@ -489,7 +489,7 @@ const styles = {
     borderRadius: "4px",
   },
   modalTextarea: {
-    padding: "0.5rem",
+    padding: "0.75rem",
     fontSize: "1rem",
     backgroundColor: "#0d1a4d",
     border: "1px solid #fff",
@@ -503,7 +503,7 @@ const styles = {
     marginTop: "1rem",
   },
   modalButton: {
-    padding: "0.5rem 1rem",
+    padding: "0.75rem 1.5rem",
     fontSize: "1rem",
     cursor: "pointer",
     backgroundColor: "#fff",
