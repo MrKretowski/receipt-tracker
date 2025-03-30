@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 
-// A small helper to format currency
+// A helper to format currency
 function formatCurrency(value) {
   return value.toFixed(2);
 }
@@ -14,14 +14,20 @@ export default function DayPage() {
   // Auth state
   const [user, setUser] = useState(null);
 
-  // Carousel state: receipts array and current index (center card)
+  // Receipt carousel: receipts array and current index (which receipt is centered)
   const [receipts, setReceipts] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Total spent on the day
+  // Day total
   const [dayTotal, setDayTotal] = useState(0);
 
-  // Check user authentication
+  // Modal state for adding new receipt
+  const [showModal, setShowModal] = useState(false);
+  const [modalShop, setModalShop] = useState("");
+  const [modalAmount, setModalAmount] = useState("");
+  const [modalDescription, setModalDescription] = useState("");
+
+  // Check authentication
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -34,13 +40,13 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  // Fetch receipts for this day, sorted by created_at descending (newest first)
+  // Fetch receipts for the day (order ascending so new ones are appended)
   async function fetchReceiptsForDay() {
     if (!user || !day) return;
 
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth() + 1; // month is zero-based so +1
+    const month = now.getMonth() + 1; // adjust for 0-index
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     const { data, error } = await supabase
@@ -48,7 +54,7 @@ export default function DayPage() {
       .select("*")
       .eq("user_id", user.id)
       .eq("date", dateStr)
-      .order("created_at", { ascending: false }); // newest first
+      .order("created_at", { ascending: true }); // oldest first
 
     if (error) {
       console.error("Error fetching receipts:", error);
@@ -63,44 +69,39 @@ export default function DayPage() {
     setDayTotal(total);
 
     setReceipts(data);
-    setCurrentIndex(0); // Ensure newest (index 0) is centered
+    // If there is at least one receipt, show the first one centered.
+    if (data.length > 0) {
+      setCurrentIndex(0);
+    }
   }
 
-  // Refresh receipts when user and day are available
   useEffect(() => {
     fetchReceiptsForDay();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, day]);
 
-  // ========== ADD A NEW TEMP RECEIPT ==========
-  function handleAddNewReceipt() {
-    // Create a temp receipt object with blank fields
-    const tempReceipt = {
-      id: "temp", // special id for temporary receipt
-      shop_name: "",
-      amount: "",
-      description: "",
-      isNew: true, // flag for editable mode
-    };
-
-    // Prepend the temp receipt so it becomes the newest and center card
-    setReceipts((prev) => [tempReceipt, ...prev]);
-    setCurrentIndex(0);
+  // ========== Modal Logic for Adding New Receipt ==========
+  function openModal() {
+    // Clear fields and open modal
+    setModalShop("");
+    setModalAmount("");
+    setModalDescription("");
+    setShowModal(true);
   }
-
-  // ========== SAVE A TEMP RECEIPT ==========
-  async function handleSaveTempReceipt(index, shopName, amount, description) {
+  async function handleModalSave() {
+    if (!modalShop || !modalAmount) return; // simple validation
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
+    // Insert the new receipt into Supabase
     const { data, error } = await supabase.from("receipts").insert([
       {
         user_id: user.id,
-        shop_name,
-        amount: amount ? parseFloat(amount) : 0,
-        description,
+        shop_name: modalShop,
+        amount: parseFloat(modalAmount),
+        description: modalDescription,
         date: dateStr,
       },
     ]);
@@ -110,194 +111,152 @@ export default function DayPage() {
       return;
     }
 
+    // Append the new receipt locally
     const newReceipt = data[0];
-    // Replace the temp receipt with the new one
-    setReceipts((prev) => {
-      const newArray = [...prev];
-      newArray[index] = newReceipt;
-      return newArray;
-    });
-
-    // Recalculate total and reset currentIndex to show the new receipt in center
+    setReceipts((prev) => [...prev, newReceipt]);
+    // Optionally update day total
     setDayTotal((prev) => prev + parseFloat(newReceipt.amount || 0));
-    setCurrentIndex(0);
+
+    setShowModal(false);
+    // If only one receipt before, then no scrolling (currentIndex remains 0).
+    // If more than one receipt now, leave currentIndex unchanged.
+  }
+  function handleModalCancel() {
+    setShowModal(false);
   }
 
   // ========== SCROLLING FUNCTIONS ==========
-  // Here, left means scrolling to an earlier receipt (lower index) and right to a newer receipt (higher index)
   function scrollLeft() {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
+    // Increase index to show a receipt that is further right (older)
+    if (currentIndex < receipts.length - 1) {
+      setCurrentIndex(currentIndex + 1);
     }
   }
   function scrollRight() {
-    if (currentIndex < receipts.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+    // Decrease index to show a receipt that is further left (newer)
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
     }
   }
 
-  // If user or day not loaded yet
+  // ---------- Render Logic ----------
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // ========== DETERMINE WHICH 3 RECEIPTS TO SHOW ==========
-  // Now, center is the currentIndex,
-  // left card is currentIndex - 1 (if exists),
-  // right card is currentIndex + 1 (if exists).
-  const center = currentIndex;
-  const left = currentIndex - 1 >= 0 ? currentIndex - 1 : null;
-  const right = currentIndex + 1 < receipts.length ? currentIndex + 1 : null;
-
-  const leftArrowDisabled = currentIndex === 0;
-  const rightArrowDisabled = currentIndex === receipts.length - 1;
-
-  // Day/Month/Year Label (for header)
-  const dateObj = new Date();
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-  const monthName = monthNames[dateObj.getMonth()];
-  const yearVal = dateObj.getFullYear();
-  const dayVal = parseInt(day, 10);
-
   return (
     <div style={styles.container}>
-      {/* Top bar: Display Day Month Year on left, total spend on right */}
+      {/* Header with Day Label and Total */}
       <header style={styles.header}>
         <h2 style={styles.dayTitle}>
-          {dayVal} {monthName} {yearVal}
+          {day} {new Date().toLocaleString("default", { month: "long" })} {new Date().getFullYear()}
         </h2>
         <div style={styles.dayTotal}>
           total today: <strong>${formatCurrency(dayTotal)}</strong>
         </div>
       </header>
 
-      {/* Main area: Plus sign to add new receipt, carousel arrows, and 3 receipt cards */}
+      {/* Main Carousel Area */}
       <div style={styles.main}>
-        {/* Plus sign (always on the left) */}
-        <div style={styles.plusContainer} onClick={handleAddNewReceipt}>
+        {/* Plus button always visible on the left */}
+        <div style={styles.plusContainer} onClick={openModal}>
           <div style={styles.plusCircle}>+</div>
         </div>
 
-        {/* Left arrow */}
-        <div
-          style={{
-            ...styles.arrow,
-            opacity: leftArrowDisabled ? 0.3 : 1,
-            cursor: leftArrowDisabled ? "default" : "pointer",
-          }}
-          onClick={() => {
-            if (!leftArrowDisabled) scrollLeft();
-          }}
-        >
-          &lt;
-        </div>
+        {receipts.length === 0 ? (
+          // When no receipts, show big "no receipts" message and no arrows
+          <div style={styles.noReceipts}>No receipts</div>
+        ) : (
+          <div style={styles.carouselContainer}>
+            {/* Left arrow */}
+            <div
+              style={{
+                ...styles.arrow,
+                opacity: currentIndex === 0 ? 0.3 : 1,
+                cursor: currentIndex === 0 ? "default" : "pointer",
+              }}
+              onClick={scrollRight}
+            >
+              &lt;
+            </div>
 
-        {/* Cards container */}
-        <div style={styles.cardsContainer}>
-          {/* Left card (if exists) */}
-          {left !== null && receipts[left] && (
-            <ReceiptCard
-              receipt={receipts[left]}
-              index={left}
-              isCenter={false}
-              onSave={handleSaveTempReceipt}
-            />
-          )}
-          {/* Center card */}
-          {receipts[center] && (
-            <ReceiptCard
-              receipt={receipts[center]}
-              index={center}
-              isCenter
-              onSave={handleSaveTempReceipt}
-            />
-          )}
-          {/* Right card (if exists) */}
-          {right !== null && receipts[right] && (
-            <ReceiptCard
-              receipt={receipts[right]}
-              index={right}
-              isCenter={false}
-              onSave={handleSaveTempReceipt}
-            />
-          )}
-        </div>
+            {/* Center receipt */}
+            <ReceiptCard receipt={receipts[currentIndex]} />
 
-        {/* Right arrow */}
-        <div
-          style={{
-            ...styles.arrow,
-            opacity: rightArrowDisabled ? 0.3 : 1,
-            cursor: rightArrowDisabled ? "default" : "pointer",
-          }}
-          onClick={() => {
-            if (!rightArrowDisabled) scrollRight();
-          }}
-        >
-          &gt;
-        </div>
+            {/* Right arrow */}
+            <div
+              style={{
+                ...styles.arrow,
+                opacity: currentIndex === receipts.length - 1 ? 0.3 : 1,
+                cursor: currentIndex === receipts.length - 1 ? "default" : "pointer",
+              }}
+              onClick={scrollLeft}
+            >
+              &gt;
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Modal for Adding New Receipt */}
+      {showModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <h3>Add New Receipt</h3>
+            <div style={styles.modalGroup}>
+              <label>Shop Name:</label>
+              <input
+                type="text"
+                value={modalShop}
+                onChange={(e) => setModalShop(e.target.value)}
+                style={styles.modalInput}
+              />
+            </div>
+            <div style={styles.modalGroup}>
+              <label>Amount:</label>
+              <input
+                type="number"
+                value={modalAmount}
+                onChange={(e) => setModalAmount(e.target.value)}
+                style={styles.modalInput}
+              />
+            </div>
+            <div style={styles.modalGroup}>
+              <label>Description:</label>
+              <textarea
+                value={modalDescription}
+                onChange={(e) => setModalDescription(e.target.value)}
+                style={styles.modalTextarea}
+              />
+            </div>
+            <div style={styles.modalActions}>
+              <button onClick={handleModalSave} style={styles.modalButton}>
+                Save
+              </button>
+              <button onClick={handleModalCancel} style={styles.modalButton}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/** ReceiptCard Component **/
-function ReceiptCard({ receipt, index, isCenter, onSave }) {
-  const [shopName, setShopName] = useState(receipt.shop_name || "");
-  const [amount, setAmount] = useState(receipt.amount || "");
-  const [description, setDescription] = useState(receipt.description || "");
-
-  const isTemp = receipt.id === "temp";
-
-  function handleSave() {
-    onSave(index, shopName, amount, description);
-  }
-
-  if (isTemp) {
-    return (
-      <div style={{ ...styles.card, ...(!isCenter ? styles.sideCard : {}) }}>
-        <h3 style={styles.cardTitle}>New Receipt</h3>
-        <div style={styles.formGroup}>
-          <label>Shop Name:</label>
-          <input
-            type="text"
-            style={styles.input}
-            value={shopName}
-            onChange={(e) => setShopName(e.target.value)}
-          />
-        </div>
-        <div style={styles.formGroup}>
-          <label>Amount:</label>
-          <input
-            type="number"
-            style={styles.input}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-        <div style={styles.formGroup}>
-          <label>Description:</label>
-          <textarea
-            style={styles.textarea}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <button style={styles.saveButton} onClick={handleSave}>
-          Save
-        </button>
-      </div>
-    );
-  }
-
+/** A simple receipt card (read-only) **/
+function ReceiptCard({ receipt }) {
   return (
-    <div style={{ ...styles.card, ...(!isCenter ? styles.sideCard : {}) }}>
+    <div style={styles.card}>
       <h3 style={styles.cardTitle}>Receipt</h3>
-      <p><strong>Shop:</strong> {receipt.shop_name}</p>
-      <p><strong>Amount:</strong> {receipt.amount}</p>
-      <p><strong>Description:</strong> {receipt.description}</p>
+      <p>
+        <strong>Shop:</strong> {receipt.shop_name}
+      </p>
+      <p>
+        <strong>Amount:</strong> {receipt.amount}
+      </p>
+      <p>
+        <strong>Description:</strong> {receipt.description}
+      </p>
     </div>
   );
 }
@@ -308,21 +267,21 @@ function ReceiptCard({ receipt, index, isCenter, onSave }) {
 const styles = {
   container: {
     minHeight: "100vh",
-    backgroundColor: "#091540", // Penn Blue
+    backgroundColor: "#091540",
     color: "#fff",
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
     flexDirection: "column",
     padding: "1rem",
+    position: "relative",
   },
   loading: {
     minHeight: "100vh",
     backgroundColor: "#091540",
-    color: "#fff",
-    fontFamily: "'Poppins', sans-serif",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    fontFamily: "'Poppins', sans-serif",
   },
   header: {
     display: "flex",
@@ -332,7 +291,7 @@ const styles = {
   },
   dayTitle: {
     margin: 0,
-    fontSize: "4rem", // Bold, 4rem as requested
+    fontSize: "4rem",
     fontWeight: "bold",
   },
   dayTotal: {
@@ -362,66 +321,79 @@ const styles = {
     fontSize: "2rem",
     fontWeight: "bold",
   },
-  arrow: {
-    fontSize: "2rem",
-    fontWeight: "bold",
-    margin: "0 1rem",
-    userSelect: "none",
-  },
-  cardsContainer: {
+  carouselContainer: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "1rem",
-    minWidth: "600px", // enough space for 3 cards
+  },
+  arrow: {
+    fontSize: "2rem",
+    fontWeight: "bold",
+    userSelect: "none",
   },
   card: {
-    width: "180px",
-    minHeight: "220px",
+    width: "220px",
+    minHeight: "250px",
     backgroundColor: "#fff",
     color: "#091540",
     borderRadius: "8px",
     padding: "1rem",
     boxSizing: "border-box",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "flex-start",
-  },
-  sideCard: {
-    opacity: 0.8,
   },
   cardTitle: {
     marginTop: 0,
     marginBottom: "0.5rem",
     fontSize: "1.1rem",
   },
-  formGroup: {
-    marginBottom: "0.5rem",
+  noReceipts: {
+    fontSize: "2rem",
+    fontWeight: "bold",
+  },
+  // Modal styles
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    color: "#091540",
+    padding: "1.5rem",
+    borderRadius: "8px",
+    minWidth: "300px",
+  },
+  modalGroup: {
+    marginBottom: "1rem",
     display: "flex",
     flexDirection: "column",
   },
-  input: {
-    padding: "0.3rem",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    fontSize: "0.9rem",
-    marginTop: "0.2rem",
+  modalInput: {
+    padding: "0.5rem",
+    fontSize: "1rem",
+    marginTop: "0.5rem",
   },
-  textarea: {
-    padding: "0.3rem",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    fontSize: "0.9rem",
-    marginTop: "0.2rem",
+  modalTextarea: {
+    padding: "0.5rem",
+    fontSize: "1rem",
+    marginTop: "0.5rem",
     resize: "vertical",
   },
-  saveButton: {
-    marginTop: "0.5rem",
-    backgroundColor: "#7692FF", // Cornflower Blue
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    padding: "0.5rem",
+  modalActions: {
+    display: "flex",
+    justifyContent: "space-around",
+    marginTop: "1rem",
+  },
+  modalButton: {
+    padding: "0.5rem 1rem",
+    fontSize: "1rem",
     cursor: "pointer",
   },
 };
+
