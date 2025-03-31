@@ -368,7 +368,7 @@ const styles = {
   // Container with two buttons side by side
   plusMinusContainer: {
     position: "absolute",
-    left: "14rem",
+    left: "16rem",
     top: "50%",
     transform: "translate(-50%, -50%)",
     display: "flex",
