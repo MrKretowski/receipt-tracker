@@ -104,7 +104,7 @@ export default function DayPage() {
     closeModal();
   }
 
-  // 4) Identify main, second, third
+  // 4) Identify main, second, third receipts
   const mainReceipt = receipts[mainIndex] || null;
   const secondReceipt = mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
   const thirdReceipt = mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
@@ -120,7 +120,7 @@ export default function DayPage() {
     if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
-  // 6) Go back
+  // 6) Go back (back button will be rendered below the header)
   function goBack() {
     router.push("/calendar");
   }
@@ -129,7 +129,7 @@ export default function DayPage() {
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // 7) Match date style with CalendarPage
+  // 7) Get date info (same as CalendarPage)
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -141,27 +141,24 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header, same structure as CalendarPage */}
+      {/* Header exactly like CalendarPage */}
       <header style={styles.header}>
-        {/* Left side: date + back button (stacked) */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <h2 style={styles.dayTitle}>
-            {dayVal} {headerMonth}, {headerYear}
-          </h2>
-          <button onClick={goBack} style={styles.backButton}>
-            ← Back
-          </button>
-        </div>
-
-        {/* Right side: Spent total (like user info in CalendarPage) */}
-        <div style={{ textAlign: "right" }}>
-          <p style={{ margin: 0, fontSize: "1.2rem" }}>
-            Spent: <strong>${dayTotal.toFixed(2)}</strong>
-          </p>
+        <h2 style={styles.dayTitle}>
+          {dayVal} {headerMonth}, {headerYear}
+        </h2>
+        <div style={styles.dayTotal}>
+          Spent: <strong>${dayTotal.toFixed(2)}</strong>
         </div>
       </header>
 
-      {/* Content */}
+      {/* Back button rendered separately */}
+      <div style={styles.backContainer}>
+        <button onClick={goBack} style={styles.backButton}>
+          ← Back
+        </button>
+      </div>
+
+      {/* Rest of the page */}
       {receipts.length === 0 ? (
         <div style={styles.noReceiptsContainer}>
           <div style={styles.plusContainer} onClick={openModal}>
@@ -174,8 +171,6 @@ export default function DayPage() {
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
-
-          {/* Main receipt */}
           {mainReceipt && (
             <div style={styles.mainReceipt}>
               <ReceiptCard
@@ -185,7 +180,6 @@ export default function DayPage() {
               />
             </div>
           )}
-          {/* Second receipt */}
           {secondReceipt && (
             <div style={styles.secondReceipt}>
               <ReceiptCard
@@ -194,7 +188,6 @@ export default function DayPage() {
               />
             </div>
           )}
-          {/* Third receipt */}
           {thirdReceipt && (
             <div style={styles.thirdReceipt}>
               <ReceiptCard
@@ -203,8 +196,6 @@ export default function DayPage() {
               />
             </div>
           )}
-
-          {/* Arrows near bottom center */}
           <div style={styles.arrowsContainer}>
             <div
               style={{
@@ -230,7 +221,6 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Modal */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -293,7 +283,6 @@ function ReceiptCard({ receipt, label, isMain }) {
   );
 }
 
-// Inline Styles
 const styles = {
   container: {
     minHeight: "100vh",
@@ -302,11 +291,10 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
     flexDirection: "column",
-    margin: 0,         // ensure no extra outside margin
-    padding: 0,        // ensure no extra outside padding
+    margin: 0,
+    padding: 0,
   },
   header: {
-    // Same as CalendarPage
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -318,6 +306,9 @@ const styles = {
     fontSize: "4rem",
     fontWeight: "bold",
   },
+  backContainer: {
+    padding: "0 2rem", // same horizontal padding as header
+  },
   backButton: {
     marginTop: "0.5rem",
     background: "none",
@@ -325,16 +316,12 @@ const styles = {
     color: "#fff",
     fontSize: "1.5rem",
     cursor: "pointer",
-    textAlign: "left",
+    padding: 0,
   },
-
-  // Right side
   dayTotal: {
     fontSize: "1.2rem",
     textAlign: "right",
   },
-
-  // If not loaded
   loading: {
     minHeight: "100vh",
     backgroundColor: "#091540",
@@ -344,8 +331,6 @@ const styles = {
     justifyContent: "center",
     fontFamily: "'Poppins', sans-serif",
   },
-
-  // No receipts
   noReceiptsContainer: {
     flex: 1,
     position: "relative",
@@ -358,8 +343,6 @@ const styles = {
     fontSize: "2rem",
     fontWeight: "bold",
   },
-
-  // Carousel
   carouselContainer: {
     flex: 1,
     position: "relative",
@@ -419,8 +402,6 @@ const styles = {
     fontWeight: "bold",
     userSelect: "none",
   },
-
-  // Receipt cards
   mainCard: {
     width: "300px",
     minHeight: "360px",
@@ -446,8 +427,6 @@ const styles = {
     marginBottom: "0.75rem",
     fontSize: "1.2rem",
   },
-
-  // Modal
   modalOverlay: {
     zIndex: 9999,
     position: "fixed",
