@@ -302,7 +302,7 @@ const styles = {
     margin: 0,
   },
   dayTitle: {
-    margin: 0,
+    margin: "1rem",
     fontSize: "4rem",
     fontWeight: "bold",
   },
