@@ -104,15 +104,14 @@ export default function DayPage() {
     closeModal();
   }
 
-  // 4) Identify main, second, third receipts
+  // 4) Identify main, second, third
   const mainReceipt = receipts[mainIndex] || null;
   const secondReceipt = mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
   const thirdReceipt = mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
 
-  // 5) Arrows
+  // 5) Arrows for carousel
   const canScrollLeft = mainIndex > 0;
   const canScrollRight = mainIndex + 1 < receipts.length;
-
   function scrollLeft() {
     if (canScrollLeft) setMainIndex(mainIndex - 1);
   }
@@ -120,16 +119,30 @@ export default function DayPage() {
     if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
-  // 6) Go back (back button will be rendered below the header)
+  // 6) Go back
   function goBack() {
     router.push("/calendar");
+  }
+
+  // 7) Immediately delete the main receipt
+  async function handleDeleteMainReceipt() {
+    if (!mainReceipt) return;
+    const { data, error } = await supabase
+      .from("receipts")
+      .delete()
+      .eq("id", mainReceipt.id);
+    if (error) {
+      console.error("Error deleting receipt:", error);
+      return;
+    }
+    await fetchReceiptsForDay();
   }
 
   // If user/day not loaded
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // 7) Get date info (same as CalendarPage)
+  // 8) Date info (same as CalendarPage)
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -141,36 +154,38 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header exactly like CalendarPage */}
+      {/* Header (exactly as in CalendarPage) */}
       <header style={styles.header}>
-        <h2 style={styles.dayTitle}>
-          {dayVal} {headerMonth}, {headerYear}
-        </h2>
+        <div style={styles.headerLeft}>
+          <h2 style={styles.dayTitle}>
+            {dayVal} {headerMonth}, {headerYear}
+          </h2>
+          <button onClick={goBack} style={styles.backButton}>
+            ← Back
+          </button>
+        </div>
         <div style={styles.dayTotal}>
           Spent: <strong>${dayTotal.toFixed(2)}</strong>
         </div>
       </header>
 
-      {/* Back button rendered separately */}
-      <div style={styles.backContainer}>
-        <button onClick={goBack} style={styles.backButton}>
-          ← Back
-        </button>
+      {/* Action Buttons: Plus for adding, Minus for immediate deletion */}
+      <div style={styles.actionContainer}>
+        <div style={styles.plusButton} onClick={openModal}>
+          <div style={styles.plusCircle}>+</div>
+        </div>
+        <div style={styles.minusButton} onClick={handleDeleteMainReceipt}>
+          <div style={styles.minusCircle}>–</div>
+        </div>
       </div>
 
-      {/* Rest of the page */}
+      {/* Content */}
       {receipts.length === 0 ? (
         <div style={styles.noReceiptsContainer}>
-          <div style={styles.plusContainer} onClick={openModal}>
-            <div style={styles.plusCircle}>+</div>
-          </div>
           <h1 style={styles.noReceipts}>No receipts</h1>
         </div>
       ) : (
         <div style={styles.carouselContainer}>
-          <div style={styles.plusContainer} onClick={openModal}>
-            <div style={styles.plusCircle}>+</div>
-          </div>
           {mainReceipt && (
             <div style={styles.mainReceipt}>
               <ReceiptCard
@@ -196,6 +211,7 @@ export default function DayPage() {
               />
             </div>
           )}
+
           <div style={styles.arrowsContainer}>
             <div
               style={{
@@ -291,23 +307,22 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
     flexDirection: "column",
-    margin: 0,
-    padding: 0,
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     padding: "1rem 2rem",
-    margin: 0,
+  },
+  headerLeft: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
   dayTitle: {
-    margin: "1rem",
+    margin: 0,
     fontSize: "4rem",
     fontWeight: "bold",
-  },
-  backContainer: {
-    padding: "0 2rem", // same horizontal padding as header
   },
   backButton: {
     marginTop: "0.5rem",
@@ -316,7 +331,6 @@ const styles = {
     color: "#fff",
     fontSize: "1.5rem",
     cursor: "pointer",
-    padding: 0,
   },
   dayTotal: {
     fontSize: "1.2rem",
@@ -347,15 +361,35 @@ const styles = {
     flex: 1,
     position: "relative",
   },
-  plusContainer: {
+  // Action container for plus and minus buttons
+  actionContainer: {
     position: "absolute",
     left: "12rem",
     top: "40%",
     transform: "translateY(-50%)",
-    cursor: "pointer",
+    display: "flex",
+    gap: "1rem",
     zIndex: 10,
   },
+  plusButton: {
+    cursor: "pointer",
+  },
   plusCircle: {
+    width: "90px",
+    height: "90px",
+    backgroundColor: "#fff",
+    color: "#091540",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "3.5rem",
+    fontWeight: "bold",
+  },
+  minusButton: {
+    cursor: "pointer",
+  },
+  minusCircle: {
     width: "90px",
     height: "90px",
     backgroundColor: "#fff",
