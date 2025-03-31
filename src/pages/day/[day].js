@@ -109,7 +109,7 @@ export default function DayPage() {
   const secondReceipt = mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
   const thirdReceipt = mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
 
-  // 5) Arrows for carousel
+  // 5) Arrows
   const canScrollLeft = mainIndex > 0;
   const canScrollRight = mainIndex + 1 < receipts.length;
   function scrollLeft() {
@@ -127,7 +127,7 @@ export default function DayPage() {
   // 7) Immediately delete the main receipt
   async function handleDeleteMainReceipt() {
     if (!mainReceipt) return;
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("receipts")
       .delete()
       .eq("id", mainReceipt.id);
@@ -142,7 +142,7 @@ export default function DayPage() {
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // 8) Date info (same as CalendarPage)
+  // 8) Match date style with CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -154,7 +154,7 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header (exactly as in CalendarPage) */}
+      {/* Header (like CalendarPage) */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <h2 style={styles.dayTitle}>
@@ -169,23 +169,19 @@ export default function DayPage() {
         </div>
       </header>
 
-      {/* Action Buttons: Plus for adding, Minus for immediate deletion */}
-      <div style={styles.actionContainer}>
-        <div style={styles.plusButton} onClick={openModal}>
-          <div style={styles.plusCircle}>+</div>
-        </div>
-        <div style={styles.minusButton} onClick={handleDeleteMainReceipt}>
-          <div style={styles.minusCircle}>–</div>
-        </div>
+      {/* Buttons side by side in a single container */}
+      <div style={styles.plusMinusContainer}>
+        <div style={styles.circleButton} onClick={openModal}>+</div>
+        <div style={styles.circleButton} onClick={handleDeleteMainReceipt}>-</div>
       </div>
 
-      {/* Content */}
       {receipts.length === 0 ? (
         <div style={styles.noReceiptsContainer}>
           <h1 style={styles.noReceipts}>No receipts</h1>
         </div>
       ) : (
         <div style={styles.carouselContainer}>
+          {/* Main receipt */}
           {mainReceipt && (
             <div style={styles.mainReceipt}>
               <ReceiptCard
@@ -195,6 +191,7 @@ export default function DayPage() {
               />
             </div>
           )}
+          {/* Second receipt */}
           {secondReceipt && (
             <div style={styles.secondReceipt}>
               <ReceiptCard
@@ -203,6 +200,7 @@ export default function DayPage() {
               />
             </div>
           )}
+          {/* Third receipt */}
           {thirdReceipt && (
             <div style={styles.thirdReceipt}>
               <ReceiptCard
@@ -212,6 +210,7 @@ export default function DayPage() {
             </div>
           )}
 
+          {/* Arrows near bottom center */}
           <div style={styles.arrowsContainer}>
             <div
               style={{
@@ -237,6 +236,7 @@ export default function DayPage() {
         </div>
       )}
 
+      {/* Modal */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -299,6 +299,9 @@ function ReceiptCard({ receipt, label, isMain }) {
   );
 }
 
+//
+// Inline Styles
+//
 const styles = {
   container: {
     minHeight: "100vh",
@@ -345,6 +348,32 @@ const styles = {
     justifyContent: "center",
     fontFamily: "'Poppins', sans-serif",
   },
+
+  // Container with two buttons side by side
+  plusMinusContainer: {
+    position: "absolute",
+    left: "12rem",
+    top: "40%",
+    transform: "translateY(-50%)",
+    display: "flex",
+    alignItems: "center", // ensures vertical alignment
+    gap: "1rem",
+    zIndex: 10,
+  },
+  circleButton: {
+    width: "90px",
+    height: "90px",
+    backgroundColor: "#fff",
+    color: "#091540",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "3.5rem",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+
   noReceiptsContainer: {
     flex: 1,
     position: "relative",
@@ -357,50 +386,12 @@ const styles = {
     fontSize: "2rem",
     fontWeight: "bold",
   },
+
   carouselContainer: {
     flex: 1,
     position: "relative",
   },
-  // Action container for plus and minus buttons
-  actionContainer: {
-    position: "absolute",
-    left: "12rem",
-    top: "40%",
-    transform: "translateY(-50%)",
-    display: "flex",
-    gap: "1rem",
-    zIndex: 10,
-  },
-  plusButton: {
-    cursor: "pointer",
-  },
-  plusCircle: {
-    width: "90px",
-    height: "90px",
-    backgroundColor: "#fff",
-    color: "#091540",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "3.5rem",
-    fontWeight: "bold",
-  },
-  minusButton: {
-    cursor: "pointer",
-  },
-  minusCircle: {
-    width: "90px",
-    height: "90px",
-    backgroundColor: "#fff",
-    color: "#091540",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "3.5rem",
-    fontWeight: "bold",
-  },
+
   mainReceipt: {
     position: "absolute",
     left: "50%",
@@ -422,6 +413,7 @@ const styles = {
     transform: "translateY(-50%)",
     zIndex: 3,
   },
+
   arrowsContainer: {
     position: "absolute",
     bottom: "1rem",
@@ -436,6 +428,7 @@ const styles = {
     fontWeight: "bold",
     userSelect: "none",
   },
+
   mainCard: {
     width: "300px",
     minHeight: "360px",
@@ -461,6 +454,8 @@ const styles = {
     marginBottom: "0.75rem",
     fontSize: "1.2rem",
   },
+
+  // Modal with same background color & bigger size
   modalOverlay: {
     zIndex: 9999,
     position: "fixed",
