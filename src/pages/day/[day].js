@@ -25,7 +25,9 @@ export default function DayPage() {
   // 1) Check user
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         router.replace("/");
       } else {
@@ -41,7 +43,9 @@ export default function DayPage() {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
-    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
 
     const { data, error } = await supabase
       .from("receipts")
@@ -84,7 +88,9 @@ export default function DayPage() {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
-    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
 
     const { data, error } = await supabase.from("receipts").insert([
       {
@@ -106,8 +112,10 @@ export default function DayPage() {
 
   // 4) Identify main, second, third
   const mainReceipt = receipts[mainIndex] || null;
-  const secondReceipt = mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
-  const thirdReceipt = mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
+  const secondReceipt =
+    mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
+  const thirdReceipt =
+    mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
 
   // 5) Arrows
   const canScrollLeft = mainIndex > 0;
@@ -120,20 +128,7 @@ export default function DayPage() {
     if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
-  // 6) Delete a receipt immediately (no confirmation)
-  async function handleDeleteReceipt(receiptId) {
-    const { data, error } = await supabase
-      .from("receipts")
-      .delete()
-      .eq("id", receiptId);
-    if (error) {
-      console.error("Error deleting receipt:", error);
-      return;
-    }
-    await fetchReceiptsForDay();
-  }
-
-  // 7) Go back – note: back button is now below the date
+  // 6) Go back
   function goBack() {
     router.push("/calendar");
   }
@@ -142,21 +137,31 @@ export default function DayPage() {
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // 8) Match date style with CalendarPage
+  // 7) Match date style with CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   const headerMonth = monthNames[dateObj.getMonth()];
   const headerYear = dateObj.getFullYear();
 
   return (
     <div style={styles.container}>
-      {/* Header */}
+      {/* Header (mirroring CalendarPage) */}
       <header style={styles.header}>
-        <div style={styles.headerLeft}>
+        <div>
           <h2 style={styles.dayTitle}>
             {dayVal} {headerMonth}, {headerYear}
           </h2>
@@ -178,6 +183,7 @@ export default function DayPage() {
         </div>
       ) : (
         <div style={styles.carouselContainer}>
+          {/* Big plus button further right */}
           <div style={styles.plusContainer} onClick={openModal}>
             <div style={styles.plusCircle}>+</div>
           </div>
@@ -189,7 +195,6 @@ export default function DayPage() {
                 receipt={mainReceipt}
                 label={`#${mainIndex + 1}`}
                 isMain
-                onDelete={() => handleDeleteReceipt(mainReceipt.id)}
               />
             </div>
           )}
@@ -199,7 +204,6 @@ export default function DayPage() {
               <ReceiptCard
                 receipt={secondReceipt}
                 label={`#${mainIndex + 2}`}
-                onDelete={() => handleDeleteReceipt(secondReceipt.id)}
               />
             </div>
           )}
@@ -209,12 +213,11 @@ export default function DayPage() {
               <ReceiptCard
                 receipt={thirdReceipt}
                 label={`#${mainIndex + 3}`}
-                onDelete={() => handleDeleteReceipt(thirdReceipt.id)}
               />
             </div>
           )}
 
-          {/* Arrows */}
+          {/* Arrows near bottom center */}
           <div style={styles.arrowsContainer}>
             <div
               style={{
@@ -240,7 +243,7 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal with same background color & bigger size */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -286,47 +289,41 @@ export default function DayPage() {
   );
 }
 
-function ReceiptCard({ receipt, label, isMain, onDelete }) {
+function ReceiptCard({ receipt, label, isMain }) {
   return (
     <div style={isMain ? styles.mainCard : styles.sideCard}>
-      <div style={styles.receiptContainer}>
-        <h3 style={styles.cardTitle}>{label}</h3>
-        <p style={{ marginBottom: "0.75rem" }}>
-          <strong>Shop:</strong> {receipt.shop_name}
-        </p>
-        <p style={{ marginBottom: "0.75rem" }}>
-          <strong>Amount:</strong> {receipt.amount}
-        </p>
-        <p style={{ marginBottom: "0.75rem" }}>
-          <strong>Description:</strong> {receipt.description}
-        </p>
-        <div style={styles.deleteIcon} onClick={onDelete}>
-          🗑
-        </div>
-      </div>
+      <h3 style={styles.cardTitle}>{label}</h3>
+      <p style={{ marginBottom: "0.75rem" }}>
+        <strong>Shop:</strong> {receipt.shop_name}
+      </p>
+      <p style={{ marginBottom: "0.75rem" }}>
+        <strong>Amount:</strong> {receipt.amount}
+      </p>
+      <p style={{ marginBottom: "0.75rem" }}>
+        <strong>Description:</strong> {receipt.description}
+      </p>
     </div>
   );
 }
 
+//
+// Inline Styles
+//
 const styles = {
   container: {
     minHeight: "100vh",
-    backgroundColor: "#091540",
+    backgroundColor: "#091540", // same background color
     color: "#fff",
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
     flexDirection: "column",
   },
   header: {
+    // Identical structure as CalendarPage
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     padding: "1rem 2rem",
-  },
-  headerLeft: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
   },
   dayTitle: {
     margin: 0,
@@ -345,6 +342,7 @@ const styles = {
     fontSize: "1.2rem",
     textAlign: "right",
   },
+
   noReceiptsContainer: {
     flex: 1,
     position: "relative",
@@ -353,10 +351,16 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
   },
+  noReceipts: {
+    fontSize: "2rem",
+    fontWeight: "bold",
+  },
+
   carouselContainer: {
     flex: 1,
     position: "relative",
   },
+
   plusContainer: {
     position: "absolute",
     left: "12rem",
@@ -377,6 +381,7 @@ const styles = {
     fontSize: "3.5rem",
     fontWeight: "bold",
   },
+
   mainReceipt: {
     position: "absolute",
     left: "50%",
@@ -398,6 +403,7 @@ const styles = {
     transform: "translateY(-50%)",
     zIndex: 3,
   },
+
   arrowsContainer: {
     position: "absolute",
     bottom: "1rem",
@@ -412,8 +418,8 @@ const styles = {
     fontWeight: "bold",
     userSelect: "none",
   },
+
   mainCard: {
-    position: "relative",
     width: "300px",
     minHeight: "360px",
     backgroundColor: "#fff",
@@ -424,7 +430,6 @@ const styles = {
     transform: "scale(1.2)",
   },
   sideCard: {
-    position: "relative",
     width: "220px",
     minHeight: "280px",
     backgroundColor: "#fff",
@@ -439,16 +444,8 @@ const styles = {
     marginBottom: "0.75rem",
     fontSize: "1.2rem",
   },
-  receiptContainer: {
-    position: "relative",
-  },
-  deleteIcon: {
-    position: "absolute",
-    top: "0.5rem",
-    right: "0.5rem",
-    cursor: "pointer",
-    fontSize: "1.5rem",
-  },
+
+  // Modal with same background color & bigger size
   modalOverlay: {
     zIndex: 9999,
     position: "fixed",
