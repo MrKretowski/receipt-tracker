@@ -25,7 +25,9 @@ export default function DayPage() {
   // 1) Check user
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         router.replace("/");
       } else {
@@ -146,8 +148,18 @@ export default function DayPage() {
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   const headerMonth = monthNames[dateObj.getMonth()];
   const headerYear = dateObj.getFullYear();
@@ -171,8 +183,12 @@ export default function DayPage() {
 
       {/* Buttons side by side in a single container */}
       <div style={styles.plusMinusContainer}>
-        <div style={styles.circleButton} onClick={openModal}>+</div>
-        <div style={styles.circleButton} onClick={handleDeleteMainReceipt}>-</div>
+        <div style={styles.circleButton} onClick={openModal}>
+          +
+        </div>
+        <div style={styles.circleButton} onClick={handleDeleteMainReceipt}>
+          -
+        </div>
       </div>
 
       {receipts.length === 0 ? (
@@ -352,11 +368,11 @@ const styles = {
   // Container with two buttons side by side
   plusMinusContainer: {
     position: "absolute",
-    left: "12rem",
-    top: "40%",
-    transform: "translateY(-50%)",
+    left: "50%",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
     display: "flex",
-    alignItems: "center", // ensures vertical alignment
+    alignItems: "center",
     gap: "1rem",
     zIndex: 10,
   },
