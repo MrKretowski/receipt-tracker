@@ -120,7 +120,22 @@ export default function DayPage() {
     if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
-  // 6) Go back
+  // 6) Delete function for main receipt
+  async function handleDelete() {
+    if (!mainReceipt) return;
+    if (!confirm("Are you sure you want to delete this receipt?")) return;
+    const { data, error } = await supabase
+      .from("receipts")
+      .delete()
+      .eq("id", mainReceipt.id);
+    if (error) {
+      console.error("Error deleting receipt:", error);
+      return;
+    }
+    await fetchReceiptsForDay();
+  }
+
+  // 7) Go back
   function goBack() {
     router.push("/calendar");
   }
@@ -129,7 +144,7 @@ export default function DayPage() {
   if (!user) return <div style={styles.loading}>Loading...</div>;
   if (!day) return <div style={styles.loading}>No day specified.</div>;
 
-  // 7) Match date style with CalendarPage
+  // 8) Match date style with CalendarPage
   const dateObj = new Date();
   const dayVal = parseInt(day, 10);
   const monthNames = [
@@ -144,12 +159,12 @@ export default function DayPage() {
       {/* Header (same style as CalendarPage) */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
-          <h2 style={styles.dayTitle}>
-            {dayVal} {headerMonth}, {headerYear}
-          </h2>
           <button onClick={goBack} style={styles.backButton}>
             ← Back
           </button>
+          <h2 style={styles.dayTitle}>
+            {dayVal} {headerMonth}, {headerYear}
+          </h2>
         </div>
         <div style={styles.dayTotal}>
           Spent: <strong>${dayTotal.toFixed(2)}</strong>
@@ -158,16 +173,28 @@ export default function DayPage() {
 
       {receipts.length === 0 ? (
         <div style={styles.noReceiptsContainer}>
-          <div style={styles.plusContainer} onClick={openModal}>
-            <div style={styles.plusCircle}>+</div>
+          {/* Action Buttons Container for Add and Delete */}
+          <div style={styles.actionContainer}>
+            <div style={styles.plusContainer} onClick={openModal}>
+              <div style={styles.plusCircle}>+</div>
+            </div>
+            {/* If no receipt exists, you might disable delete */}
+            <div style={styles.deleteContainer} onClick={handleDelete}>
+              <div style={styles.deleteCircle}>🗑</div>
+            </div>
           </div>
           <h1 style={styles.noReceipts}>No receipts</h1>
         </div>
       ) : (
         <div style={styles.carouselContainer}>
-          {/* Big plus button further right */}
-          <div style={styles.plusContainer} onClick={openModal}>
-            <div style={styles.plusCircle}>+</div>
+          {/* Action Buttons Container with Plus and Delete */}
+          <div style={styles.actionContainer}>
+            <div style={styles.plusContainer} onClick={openModal}>
+              <div style={styles.plusCircle}>+</div>
+            </div>
+            <div style={styles.deleteContainer} onClick={handleDelete}>
+              <div style={styles.deleteCircle}>🗑</div>
+            </div>
           </div>
 
           {/* Main receipt */}
@@ -225,7 +252,7 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Modal with the same background color, but bigger so it covers first receipt */}
+      {/* Modal with the same background color */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -303,13 +330,14 @@ const styles = {
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "center", // centers the content vertically
     padding: "1rem 2rem",
   },
   headerLeft: {
     display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
+    flexDirection: "row", // change from column to row
+    alignItems: "center",
+    gap: "1rem",
   },
   dayTitle: {
     margin: 0,
@@ -317,7 +345,6 @@ const styles = {
     fontWeight: "bold",
   },
   backButton: {
-    marginTop: "0.5rem",
     background: "none",
     border: "none",
     color: "#fff",
@@ -337,29 +364,45 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
   },
-  noReceipts: {
-    fontSize: "2rem",
-    fontWeight: "bold",
-  },
 
   carouselContainer: {
     flex: 1,
     position: "relative",
   },
 
-  plusContainer: {
+  // Action Container for Plus and Delete buttons
+  actionContainer: {
     position: "absolute",
     left: "12rem",
     top: "40%",
     transform: "translateY(-50%)",
-    cursor: "pointer",
+    display: "flex",
+    gap: "1rem",
     zIndex: 10,
+  },
+  plusContainer: {
+    cursor: "pointer",
   },
   plusCircle: {
     width: "90px",
     height: "90px",
     backgroundColor: "#fff",
     color: "#091540",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "3.5rem",
+    fontWeight: "bold",
+  },
+  deleteContainer: {
+    cursor: "pointer",
+  },
+  deleteCircle: {
+    width: "90px",
+    height: "90px",
+    backgroundColor: "#ff4d4d", // a red color to indicate delete
+    color: "#fff",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
@@ -431,7 +474,7 @@ const styles = {
     fontSize: "1.2rem",
   },
 
-  // Modal with same background color & bigger size
+  // Modal Styles
   modalOverlay: {
     zIndex: 9999,
     position: "fixed",
@@ -439,20 +482,18 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "transparent", // no shadow
+    backgroundColor: "transparent",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
   modalContent: {
-    backgroundColor: "#091540", // same as the page background
-    border: "none",             // remove the white border
+    backgroundColor: "#091540",
+    border: "none",
     borderRadius: "4px",
     padding: "2rem",
-    width: "500px",             // match the receipt width
+    width: "500px",
     color: "#fff",
-    // Optionally, remove the boxShadow if you want an even cleaner look:
-    // boxShadow: "none",
   },
   modalTitle: {
     marginTop: 0,
@@ -503,3 +544,4 @@ const styles = {
     borderRadius: "4px",
   },
 };
+
