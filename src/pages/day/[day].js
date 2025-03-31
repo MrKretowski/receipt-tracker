@@ -120,14 +120,12 @@ export default function DayPage() {
     if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
-  // 6) Delete function for main receipt
-  async function handleDelete() {
-    if (!mainReceipt) return;
-    if (!confirm("Are you sure you want to delete this receipt?")) return;
+  // 6) Delete a receipt immediately (no confirmation)
+  async function handleDeleteReceipt(receiptId) {
     const { data, error } = await supabase
       .from("receipts")
       .delete()
-      .eq("id", mainReceipt.id);
+      .eq("id", receiptId);
     if (error) {
       console.error("Error deleting receipt:", error);
       return;
@@ -135,7 +133,7 @@ export default function DayPage() {
     await fetchReceiptsForDay();
   }
 
-  // 7) Go back
+  // 7) Go back – note: back button is now below the date
   function goBack() {
     router.push("/calendar");
   }
@@ -156,15 +154,15 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header (same style as CalendarPage) */}
+      {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
-          <button onClick={goBack} style={styles.backButton}>
-            ← Back
-          </button>
           <h2 style={styles.dayTitle}>
             {dayVal} {headerMonth}, {headerYear}
           </h2>
+          <button onClick={goBack} style={styles.backButton}>
+            ← Back
+          </button>
         </div>
         <div style={styles.dayTotal}>
           Spent: <strong>${dayTotal.toFixed(2)}</strong>
@@ -173,28 +171,15 @@ export default function DayPage() {
 
       {receipts.length === 0 ? (
         <div style={styles.noReceiptsContainer}>
-          {/* Action Buttons Container for Add and Delete */}
-          <div style={styles.actionContainer}>
-            <div style={styles.plusContainer} onClick={openModal}>
-              <div style={styles.plusCircle}>+</div>
-            </div>
-            {/* If no receipt exists, you might disable delete */}
-            <div style={styles.deleteContainer} onClick={handleDelete}>
-              <div style={styles.deleteCircle}>🗑</div>
-            </div>
+          <div style={styles.plusContainer} onClick={openModal}>
+            <div style={styles.plusCircle}>+</div>
           </div>
           <h1 style={styles.noReceipts}>No receipts</h1>
         </div>
       ) : (
         <div style={styles.carouselContainer}>
-          {/* Action Buttons Container with Plus and Delete */}
-          <div style={styles.actionContainer}>
-            <div style={styles.plusContainer} onClick={openModal}>
-              <div style={styles.plusCircle}>+</div>
-            </div>
-            <div style={styles.deleteContainer} onClick={handleDelete}>
-              <div style={styles.deleteCircle}>🗑</div>
-            </div>
+          <div style={styles.plusContainer} onClick={openModal}>
+            <div style={styles.plusCircle}>+</div>
           </div>
 
           {/* Main receipt */}
@@ -204,6 +189,7 @@ export default function DayPage() {
                 receipt={mainReceipt}
                 label={`#${mainIndex + 1}`}
                 isMain
+                onDelete={() => handleDeleteReceipt(mainReceipt.id)}
               />
             </div>
           )}
@@ -213,6 +199,7 @@ export default function DayPage() {
               <ReceiptCard
                 receipt={secondReceipt}
                 label={`#${mainIndex + 2}`}
+                onDelete={() => handleDeleteReceipt(secondReceipt.id)}
               />
             </div>
           )}
@@ -222,11 +209,12 @@ export default function DayPage() {
               <ReceiptCard
                 receipt={thirdReceipt}
                 label={`#${mainIndex + 3}`}
+                onDelete={() => handleDeleteReceipt(thirdReceipt.id)}
               />
             </div>
           )}
 
-          {/* Arrows near bottom center */}
+          {/* Arrows */}
           <div style={styles.arrowsContainer}>
             <div
               style={{
@@ -252,7 +240,7 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Modal with the same background color */}
+      {/* Modal */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -298,30 +286,32 @@ export default function DayPage() {
   );
 }
 
-function ReceiptCard({ receipt, label, isMain }) {
+function ReceiptCard({ receipt, label, isMain, onDelete }) {
   return (
     <div style={isMain ? styles.mainCard : styles.sideCard}>
-      <h3 style={styles.cardTitle}>{label}</h3>
-      <p style={{ marginBottom: "0.75rem" }}>
-        <strong>Shop:</strong> {receipt.shop_name}
-      </p>
-      <p style={{ marginBottom: "0.75rem" }}>
-        <strong>Amount:</strong> {receipt.amount}
-      </p>
-      <p style={{ marginBottom: "0.75rem" }}>
-        <strong>Description:</strong> {receipt.description}
-      </p>
+      <div style={styles.receiptContainer}>
+        <h3 style={styles.cardTitle}>{label}</h3>
+        <p style={{ marginBottom: "0.75rem" }}>
+          <strong>Shop:</strong> {receipt.shop_name}
+        </p>
+        <p style={{ marginBottom: "0.75rem" }}>
+          <strong>Amount:</strong> {receipt.amount}
+        </p>
+        <p style={{ marginBottom: "0.75rem" }}>
+          <strong>Description:</strong> {receipt.description}
+        </p>
+        <div style={styles.deleteIcon} onClick={onDelete}>
+          🗑
+        </div>
+      </div>
     </div>
   );
 }
 
-//
-// Inline Styles
-//
 const styles = {
   container: {
     minHeight: "100vh",
-    backgroundColor: "#091540", // same background color
+    backgroundColor: "#091540",
     color: "#fff",
     fontFamily: "'Poppins', sans-serif",
     display: "flex",
@@ -330,14 +320,13 @@ const styles = {
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center", // centers the content vertically
+    alignItems: "center",
     padding: "1rem 2rem",
   },
   headerLeft: {
     display: "flex",
-    flexDirection: "row", // change from column to row
-    alignItems: "center",
-    gap: "1rem",
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
   dayTitle: {
     margin: 0,
@@ -345,6 +334,7 @@ const styles = {
     fontWeight: "bold",
   },
   backButton: {
+    marginTop: "0.5rem",
     background: "none",
     border: "none",
     color: "#fff",
@@ -355,7 +345,6 @@ const styles = {
     fontSize: "1.2rem",
     textAlign: "right",
   },
-
   noReceiptsContainer: {
     flex: 1,
     position: "relative",
@@ -364,24 +353,17 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
   },
-
   carouselContainer: {
     flex: 1,
     position: "relative",
   },
-
-  // Action Container for Plus and Delete buttons
-  actionContainer: {
+  plusContainer: {
     position: "absolute",
     left: "12rem",
     top: "40%",
     transform: "translateY(-50%)",
-    display: "flex",
-    gap: "1rem",
-    zIndex: 10,
-  },
-  plusContainer: {
     cursor: "pointer",
+    zIndex: 10,
   },
   plusCircle: {
     width: "90px",
@@ -395,22 +377,6 @@ const styles = {
     fontSize: "3.5rem",
     fontWeight: "bold",
   },
-  deleteContainer: {
-    cursor: "pointer",
-  },
-  deleteCircle: {
-    width: "90px",
-    height: "90px",
-    backgroundColor: "#ff4d4d", // a red color to indicate delete
-    color: "#fff",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "3.5rem",
-    fontWeight: "bold",
-  },
-
   mainReceipt: {
     position: "absolute",
     left: "50%",
@@ -432,7 +398,6 @@ const styles = {
     transform: "translateY(-50%)",
     zIndex: 3,
   },
-
   arrowsContainer: {
     position: "absolute",
     bottom: "1rem",
@@ -447,8 +412,8 @@ const styles = {
     fontWeight: "bold",
     userSelect: "none",
   },
-
   mainCard: {
+    position: "relative",
     width: "300px",
     minHeight: "360px",
     backgroundColor: "#fff",
@@ -459,6 +424,7 @@ const styles = {
     transform: "scale(1.2)",
   },
   sideCard: {
+    position: "relative",
     width: "220px",
     minHeight: "280px",
     backgroundColor: "#fff",
@@ -473,8 +439,16 @@ const styles = {
     marginBottom: "0.75rem",
     fontSize: "1.2rem",
   },
-
-  // Modal Styles
+  receiptContainer: {
+    position: "relative",
+  },
+  deleteIcon: {
+    position: "absolute",
+    top: "0.5rem",
+    right: "0.5rem",
+    cursor: "pointer",
+    fontSize: "1.5rem",
+  },
   modalOverlay: {
     zIndex: 9999,
     position: "fixed",
@@ -544,4 +518,3 @@ const styles = {
     borderRadius: "4px",
   },
 };
-
