@@ -160,7 +160,7 @@ export default function CalendarPage() {
             <strong>{user.email}</strong>
           </p>
           <p style={{ margin: 0, fontSize: "1.2rem" }}>
-            Spent: <strong>${monthlyTotal.toFixed(2)}</strong>
+            Spent: <strong>€{monthlyTotal.toFixed(2)}</strong>
           </p>
           <button
             onClick={handleLogout}
