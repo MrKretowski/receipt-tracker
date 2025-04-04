@@ -189,24 +189,23 @@ export default function CalendarPage() {
           {calendarCells.map((cell, index) => {
             if (!cell) {
               return (
-                <div
-                  key={index}
-                  style={{ border: "1px solid transparent" }}
-                />
+                <div key={index} style={{ border: "1px solid transparent" }} />
               );
             }
             const count = dailyCounts[cell] || 0;
             return (
               <div
                 key={index}
-                onClick={() => router.push(`/day/${cell}`)}
+                onClick={() =>
+                  router.push(
+                    `/day/${cell}?month=${currentMonth + 1}&year=${currentYear}`
+                  )
+                }
                 style={styles.calendarCell}
               >
                 <span style={{ fontSize: "1rem" }}>{cell}</span>
                 {count > 0 && (
-                  <div style={styles.countBadge}>
-                    {count}
-                  </div>
+                  <div style={styles.countBadge}>{count}</div>
                 )}
               </div>
             );
