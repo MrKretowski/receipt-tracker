@@ -161,7 +161,7 @@ export default function DayPage() {
           </button>
         </div>
         <div style={styles.dayTotal}>
-          Spent: <strong>${dayTotal.toFixed(2)}</strong>
+          Spent: <strong>€{dayTotal.toFixed(2)}</strong>
         </div>
       </header>
 
