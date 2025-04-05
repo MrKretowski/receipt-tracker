@@ -2,14 +2,12 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 
-// Helper to format currency
 function formatCurrency(value) {
   return value.toFixed(2);
 }
 
 export default function DayPage() {
   const router = useRouter();
-  // Read day, month, and year from the query parameters
   const { day, month, year } = router.query;
 
   const [user, setUser] = useState(null);
@@ -17,13 +15,11 @@ export default function DayPage() {
   const [mainIndex, setMainIndex] = useState(0);
   const [dayTotal, setDayTotal] = useState(0);
 
-  // Modal states
   const [showModal, setShowModal] = useState(false);
   const [modalShop, setModalShop] = useState("");
   const [modalAmount, setModalAmount] = useState("");
   const [modalDescription, setModalDescription] = useState("");
 
-  // 1) Check user
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -36,10 +32,8 @@ export default function DayPage() {
     checkUser();
   }, [router]);
 
-  // 2) Fetch receipts for this day
   async function fetchReceiptsForDay() {
     if (!user || !day || !month || !year) return;
-    // Build the date string from query parameters
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     const { data, error } = await supabase
@@ -65,10 +59,8 @@ export default function DayPage() {
 
   useEffect(() => {
     fetchReceiptsForDay();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, day, month, year]);
 
-  // 3) Modal Logic
   function openModal() {
     setModalShop("");
     setModalAmount("");
@@ -99,12 +91,10 @@ export default function DayPage() {
     closeModal();
   }
 
-  // 4) Identify main, second, third receipts
   const mainReceipt = receipts[mainIndex] || null;
   const secondReceipt = mainIndex + 1 < receipts.length ? receipts[mainIndex + 1] : null;
   const thirdReceipt = mainIndex + 2 < receipts.length ? receipts[mainIndex + 2] : null;
 
-  // 5) Arrows
   const canScrollLeft = mainIndex > 0;
   const canScrollRight = mainIndex + 1 < receipts.length;
   function scrollLeft() {
@@ -114,12 +104,10 @@ export default function DayPage() {
     if (canScrollRight) setMainIndex(mainIndex + 1);
   }
 
-  // 6) Go back to calendar
   function goBack() {
     router.push("/calendar");
   }
 
-  // 7) Delete the main receipt
   async function handleDeleteMainReceipt() {
     if (!mainReceipt) return;
     const { error } = await supabase
@@ -137,9 +125,8 @@ export default function DayPage() {
   if (!day || !month || !year)
     return <div style={styles.loading}>No day specified.</div>;
 
-  // 8) Format header date using query values
   const dayVal = parseInt(day, 10);
-  const monthVal = parseInt(month, 10) - 1; // adjust because Date months are 0-indexed
+  const monthVal = parseInt(month, 10) - 1;
   const yearVal = parseInt(year, 10);
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -150,7 +137,7 @@ export default function DayPage() {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
+     
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <h2 style={styles.dayTitle}>
@@ -165,7 +152,7 @@ export default function DayPage() {
         </div>
       </header>
 
-      {/* Buttons */}
+      
       <div style={styles.plusMinusContainer}>
         <div style={styles.circleButton} onClick={openModal}>
           +
@@ -231,7 +218,7 @@ export default function DayPage() {
         </div>
       )}
 
-      {/* Modal */}
+      
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
